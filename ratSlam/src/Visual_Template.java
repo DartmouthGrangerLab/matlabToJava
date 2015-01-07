@@ -1,11 +1,15 @@
+import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
+import java.util.Arrays;
+
 
 // This class creates the visual template, taking the image 
 // and breaking it down into a two-dimensional array
 
 public class Visual_Template 
 {
-	int IMAGE_Y_SIZE = 100;		
-	int IMAGE_X_SIZE = 100;		
+	int IMAGE_Y_SIZE;		
+	int IMAGE_X_SIZE;		
 
 	int numvts = 1;
 	int prev_vt_id = 1;
@@ -18,7 +22,9 @@ public class Visual_Template
 	int[] IMAGE_VT_Y_RANGE = setRange(IMAGE_Y_SIZE);
 	int[] IMAGE_VT_X_RANGE = setRange(IMAGE_X_SIZE);
 
-	int[][] sub_image = {IMAGE_VT_Y_RANGE,IMAGE_VT_X_RANGE};
+//	int[][] sub_image = {IMAGE_VT_Y_RANGE,IMAGE_VT_X_RANGE};
+	int[][] sub_image = new int[IMAGE_Y_SIZE][];
+	
 	int x_val, y_val, th_val;
 	int[][] raw_image = null;
 	int[] new_vt_history = null;
@@ -31,22 +37,56 @@ public class Visual_Template
 		raw_image = raw_img;
 	}
 
+	public Visual_Template(BufferedImage img, int x, int y, int th, int vidWidth, int vidHeight)
+	{
+		x_val = 0;
+		y_val = 0;
+		th_val = 0;
+		int [][] intImg = get2DarrayIntsFromImg(img);
+		raw_image = intImg;
+		IMAGE_X_SIZE = vidWidth;
+		IMAGE_Y_SIZE = vidHeight;
+		
+		for (int i = 0; i < IMAGE_Y_SIZE; i++) {
+			sub_image[i] = Arrays.copyOfRange(raw_image[i], 0, IMAGE_X_SIZE);
+		}
+	}
+	
+	private int [][] get2DarrayIntsFromImg(BufferedImage img) {
+		// convert a BufferedImage to a 2D array of int like in Matlab
+		try {
+			Raster raster=img.getData();
+			int w=raster.getWidth(),h=raster.getHeight();
+			int pixels[][]=new int[w][h];
+			for (int x=0;x<w;x++) {
+				for(int y=0;y<h;y++) {
+					pixels[x][y]=raster.getSample(x,y,0);
+				}
+			}
+			return pixels;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+
 	public void visual_template()
 	{
 		int vt_id = 0;
 
 		// normalized intensity sums
-		int[][] image_x_sums = {};
+		int[][] image_x_sums = sub_image.clone();
 
 		// Goes through each pixel of the image, sums up the rows
 		// and stores the sum of each row into image_x_sums
-		for (int i = 0; i < sub_image.length; i++)
-		{
-			for(int j = 0; j < sub_image[1].length; i++)
-			{
-				image_x_sums[i][j] = sub_image[i][j];
-			}
-		}
+//		for (int i = 0; i < sub_image.length; i++)
+//		{
+//			for(int j = 0; j < sub_image[1].length; i++)
+//			{
+//				image_x_sums[i][j] = sub_image[i][j];
+//			}
+//		}
 
 		// adds all values in image_x_sums
 		int sumOf_image_x_sums = 0;

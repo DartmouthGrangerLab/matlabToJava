@@ -13,6 +13,17 @@
 //    'POSECELL_VTRANS_SCALING', 2, ...
 //    'VTRANS_SCALE', 1, ... % to get the data into delta change in radians between frames
 //    'EXP_LOOPS', 200);
+import javax.media.*;
+import javax.swing.GrayFilter;
+
+import java.awt.Frame;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageFilter;
+import java.awt.image.ImageProducer;
+import java.io.File;
 
 public class main_ratslam 
 {
@@ -53,8 +64,8 @@ public class main_ratslam
 	static int IMAGE_X_SIZE = 100;		// Should be size of viddata
 
 	// Used to process parameters
-	static int RENDER_RATE;
-	static int BLOCK_READ;
+	static int RENDER_RATE = 1;
+	static int BLOCK_READ = 10;
 
 
 	static int[][][] Posecells =  new int[PC_DIM_XY][PC_DIM_XY][PC_DIM_TH];
@@ -71,7 +82,7 @@ public class main_ratslam
 	int[] time_delta_s;
 	// start stopwatch here
 	
-	
+	static String MOV_FILE = "file:///Users/bentito/Downloads/stlucia_testloop.avi";
 	// Main method of ratSLAM, not including constants (which are above, for the most part)
 	public static void main(String[] args) 
 	{
@@ -89,14 +100,18 @@ public class main_ratslam
 		// Specify movie and frames to read
 		// In our case, specify image size, in x and y direction
 
+
+		VideoSource vs = new VideoSource(MOV_FILE);
+		vs.initialize();
+
 		// store size in a variable
 		// 5 used as random size
 		VT[] vt = new VT[5];
 		int numvts = 1;
-		vt[numvts].template_decay = 1.0;
+		
 		// Need to fix parameters; more specifically, array sizes
 		vt[1] = new VT(numvts, new int[][]{},1.0,x_pc,y_pc,th_pc,1,1,new Experience[5]);
-
+		vt[numvts].template_decay = 1.0;
 		Experience[] exps = new Experience[5];
 		// figure out where to get id
 		exps[1] = new Experience(0, x_pc, y_pc, th_pc, 0, 0, (PI/2), 1, 0, new Link[5]);
@@ -123,18 +138,40 @@ public class main_ratslam
 			prev_vrot_image_x_sums = new int[1][IMAGE_ODO_X_RANGE.length];
 			prev_vtrans_image_x_sums = new int[1][IMAGE_ODO_X_RANGE.length];
 		}
-		int frame = 0;
-		for (frame = 0; frame < END_FRAME; frame++)
+		int frameIdx = 0;
+	    while (vs.getState()==VideoSource.NOT_READY) { 
+	        try { Thread.sleep(100); } catch (Exception e) { } 
+	    } 
+	    if (vs.getState()==VideoSource.ERROR) { 
+	        System.out.println("Error while initing"+args[0]); 
+	        return; 
+	    }
+		int frameCount = vs.getFrameCount();
+		END_FRAME = frameCount;
+		Frame frame = new Frame(); 
+	    frame.setVisible(true); 
+	    int vt_id;
+	    
+		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++)
 		{
 			// save the experience map information to the disk for later playback
 			// read the avi file (in our case, the photo file) and record the delta time
-			if (frame % BLOCK_READ == 0)
+			if (frameIdx % BLOCK_READ == 0)
 			{
 				// save
 				//if (ODO_FILE != 0)
 				//{
 					
 				//}
+			} else {
+				BufferedImage img = vs.getFrame(frameIdx);
+				ImageFilter filter = new GrayFilter(true, 0);  
+				ImageProducer producer = new FilteredImageSource(img.getSource(), filter);  
+				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  
+				
+				drawFrame(frame,img, grayImg,frameIdx);
+				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, vs.vidWidth, vs.vidHeight);
+				viewTemplate.visual_template();
 			}
 		}
 
@@ -151,4 +188,21 @@ public class main_ratslam
 		}
 		return toReturn;
 	}
+	
+	public static void drawFrame(Frame frame, BufferedImage image,  Image grayImg, int index) { 
+	    if (image!=null) { 
+	        frame.setSize(image.getWidth(), image.getWidth()); 
+	        frame.getGraphics().drawImage(grayImg, 0, 0, null);
+	        try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	        System.out.println("Image at index: "+index); 
+	    } else { 
+	        System.out.println("null image"); 
+	    } 
+	     
+	} 
 }
