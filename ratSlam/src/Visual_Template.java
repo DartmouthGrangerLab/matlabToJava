@@ -29,6 +29,8 @@ public class Visual_Template
 	int[][] raw_image = null;
 	int[] new_vt_history = null;
 	
+	Experience [] exps = new Experience [5];
+	
 	public Visual_Template(int raw_img[][], int x, int y, int th)
 	{
 		x_val = 0;
@@ -37,7 +39,7 @@ public class Visual_Template
 		raw_image = raw_img;
 	}
 
-	public Visual_Template(BufferedImage img, int x, int y, int th, int vidWidth, int vidHeight)
+	public Visual_Template(BufferedImage img, int x, int y, int th, int vidWidth, int vidHeight, Experience [] exps)
 	{
 		x_val = 0;
 		y_val = 0;
@@ -46,6 +48,7 @@ public class Visual_Template
 		raw_image = intImg;
 		IMAGE_X_SIZE = vidWidth;
 		IMAGE_Y_SIZE = vidHeight;
+		exps = exps;
 		
 		for (int i = 0; i < IMAGE_Y_SIZE; i++) {
 			sub_image[i] = Arrays.copyOfRange(raw_image[i], 0, IMAGE_X_SIZE);
@@ -111,7 +114,8 @@ public class Visual_Template
 		// change parameters
 		VT[] vt = new VT[]{};
 
-		//vt[0] = new VT(1,1,1,1);
+		//vt[0] = new VT(1,image_x_sums,1.0,31, 31, 19, 1, 1, exp);
+		// public VT(int numvts, int[][] img_sums, double decay, int xPc, int yPc, int thPc, int f, int numE, Experience[] exp)
 		// get vt down before doing this loop
 		for (int k = 0; k < numvts; k++)
 		{

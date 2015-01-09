@@ -170,7 +170,7 @@ public class main_ratslam
 				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  
 				
 				drawFrame(frame,img, grayImg,frameIdx);
-				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, vs.vidWidth, vs.vidHeight);
+				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, vs.vidWidth, vs.vidHeight, exps);
 				viewTemplate.visual_template();
 			}
 		}
