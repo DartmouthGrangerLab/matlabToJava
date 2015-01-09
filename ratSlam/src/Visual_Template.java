@@ -79,7 +79,8 @@ public class Visual_Template
 		int vt_id = 0;
 
 		// normalized intensity sums
-		int[][] image_x_sums = sub_image.clone();
+	
+		int[][] image_x_sums = (int[][]) this.sub_image.clone();
 
 		// Goes through each pixel of the image, sums up the rows
 		// and stores the sum of each row into image_x_sums
