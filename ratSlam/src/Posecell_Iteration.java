@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 // rs_posecell_iteration (vt_id, vtrans, vrot)
 public class Posecell_Iteration 
 {
@@ -20,8 +18,8 @@ public class Posecell_Iteration
 	int[] PC_E_TH_WRAP;
 	int[] PC_I_XY_WRAP;
 	int[] PC_I_TH_WRAP;
-	Posecells PC_W_EXCITE = new Posecells(PC_W_E_DIM, PC_W_E_VAR);
-	Posecells PC_W_INHIB = new Posecells(PC_W_I_DIM, PC_W_I_VAR);
+	double[][][] PC_W_EXCITE;
+	double[][][] PC_W_INHIB;
 	double PC_VT_INJECT_ENERGY;
 	int act_x;
 	int act_y;
@@ -29,6 +27,7 @@ public class Posecell_Iteration
 	double energy;
 	double[][][] pca_new;
 	double dir;
+	double[][][] posecells;
 
 	// My variables
 	double[][][] pca90;
@@ -38,37 +37,40 @@ public class Posecell_Iteration
 	int vt_id;
 	int vtrans;
 	int vrot;
-	Posecells poseCells;
-//	VT[] vt;
+	Posecells pc;
+	VT[] vt;
 
-	public Posecell_Iteration(double trans, double rot, Posecells p, ArrayList <VT> vts)
+	public Posecell_Iteration(int vtId, int trans, int rot, Posecells p, VT[] v)
 	{
-//		vt_id = vtId;
-//		vtrans = trans;
-//		vrot = rot;
-//		poseCells = p;
-//		vt = v;
+		vt_id = vtId;
+		vtrans = trans;
+		vrot = rot;
+		pc = p;
+		vt = v;
+		posecells = p.posecells;
+		PC_W_EXCITE = pc.pc_w_excite;
+		PC_W_INHIB = pc.pc_w_inhib;
 	}
 
 	public void iteration()
 	{
 		// if this isn't a new vt, then add the energy at its associated posecell location
-//		if (vt[vt_id].first != 1)
-//		{
-//			act_x = Math.min(Math.max(Math.round(vt[vt_id].x_pc), 1), PC_DIM_XY);
-//			act_y = Math.min(Math.max(Math.round(vt[vt_id].y_pc), 1), PC_DIM_XY);
-//			act_th = Math.min(Math.max(Math.round(vt[vt_id].th_pc), 1), PC_DIM_TH);
-//
-//			// This decays the amount of energy that's injected at the vt's posecell location
-//			// This is important as the Posecells poseCells will erroneously snap
-//			// for bad vt matches that occur over long periods (ex. a bad match that occurs while agent is stationary)
-//			// This means that multiple vt's need to be recognized for a snap to happen
-//			energy = PC_VT_INJECT_ENERGY * (1/30) * (30 - Math.exp(1.2 * vt[vt_id].template_decay));
-//			if (energy > 0)
-//			{
-//				poseCells.weights[act_x][act_y][act_th] += energy;
-//			}
-//		}
+		if (vt[vt_id].first != 1)
+		{
+			act_x = Math.min(Math.max(Math.round(vt[vt_id].x_pc), 1), PC_DIM_XY);
+			act_y = Math.min(Math.max(Math.round(vt[vt_id].y_pc), 1), PC_DIM_XY);
+			act_th = Math.min(Math.max(Math.round(vt[vt_id].th_pc), 1), PC_DIM_TH);
+
+			// This decays the amount of energy that's injected at the vt's posecell location
+			// This is important as the Posecells poseCells will erroneously snap
+			// for bad vt matches that occur over long periods (ex. a bad match that occurs while agent is stationary)
+			// This means that multiple vt's need to be recognized for a snap to happen
+			energy = PC_VT_INJECT_ENERGY * (1/30) * (30 - Math.exp(1.2 * vt[vt_id].template_decay));
+			if (energy > 0)
+			{
+				posecells[act_x][act_y][act_th] += energy;
+			}
+		}
 
 		// local excitation - PC_le = PC elements + PC weights
 		pca_new = new double[PC_DIM_XY][PC_DIM_XY][PC_DIM_TH];
@@ -78,7 +80,7 @@ public class Posecell_Iteration
 			{
 				for (int k = 0; k < PC_DIM_TH; k++)
 				{
-					if (poseCells.weights[i][j][k] != 0)
+					if (posecells[i][j][k] != 0)
 					{
 						for (int m = 0; m < (m + PC_W_E_DIM - 1); m++)
 							for (int n = 0; n < (n + PC_W_E_DIM - 1); n++)
@@ -86,12 +88,12 @@ public class Posecell_Iteration
 									pca_new[PC_E_XY_WRAP[m]][PC_E_XY_WRAP[n]]
 											[PC_E_TH_WRAP[o]] = pca_new[PC_E_XY_WRAP[m]]
 													[PC_E_XY_WRAP[n]][PC_E_TH_WRAP[o]] 
-															* PC_W_EXCITE.weights[i][j][k];					
+															* PC_W_EXCITE[i][j][k];					
 					}
 				}
 			}
 		}
-		poseCells.weights = pca_new;
+		posecells = pca_new;
 
 		// local inhibition - PC_li = PC_;e - PC_le elements * PC weights
 
@@ -103,7 +105,7 @@ public class Posecell_Iteration
 			{
 				for (int k = 0; k < PC_DIM_TH; k++)
 				{
-					if (poseCells.weights[i][j][k] != 0)
+					if (posecells[i][j][k] != 0)
 					{
 						for (int m = 0; m < (m + PC_W_I_DIM - 1); m++)
 							for (int n = 0; n < (n + PC_W_I_DIM - 1); n++)
@@ -111,7 +113,7 @@ public class Posecell_Iteration
 									pca_new[PC_I_XY_WRAP[m]][PC_I_XY_WRAP[n]]
 											[PC_I_TH_WRAP[o]] = pca_new[PC_I_XY_WRAP[m]]
 													[PC_I_XY_WRAP[n]][PC_I_TH_WRAP[o]] 
-															* PC_W_INHIB.weights[i][j][k];
+															* PC_W_INHIB[i][j][k];
 					}
 				}
 			}
@@ -125,7 +127,7 @@ public class Posecell_Iteration
 			{
 				for (int k = 0; k < PC_DIM_TH; k++)
 				{
-					poseCells.weights[i][j][k] -= pca_new[i][j][k];
+					posecells[i][j][k] -= pca_new[i][j][k];
 				}
 			}
 		}
@@ -140,11 +142,11 @@ public class Posecell_Iteration
 			{
 				for (int k = 0; k < PC_DIM_TH; k++)
 				{
-					double x = poseCells.weights[i][j][k];
+					double x = posecells[i][j][k];
 					if (x >= PC_GLOBAL_INHIB)
 					{
-						poseCells.weights[i][j][k] *= (x - PC_GLOBAL_INHIB);
-						total += poseCells.weights[i][j][k];
+						posecells[i][j][k] *= (x - PC_GLOBAL_INHIB);
+						total += posecells[i][j][k];
 					}
 				}
 			}
@@ -157,8 +159,8 @@ public class Posecell_Iteration
 			{
 				for (int k = 0; k < PC_DIM_TH; k++)
 				{
-					double x = poseCells.weights[i][j][k];					
-					poseCells.weights[i][j][k] = x / total;
+					double x = posecells[i][j][k];					
+					posecells[i][j][k] = x / total;
 				}
 			}
 		}
@@ -195,7 +197,7 @@ public class Posecell_Iteration
 			else
 			{
 				// rotate  poseCells instead of implementing for four quadrants
-				pca90 = rot90(poseCells.weights, 0, (int)Math.floor(dir * 2 / PI));
+				pca90 = rot90(posecells, 0, (int)Math.floor(dir * 2 / PI));
 				dir90 = dir - Math.floor(dir * 2 / PI) * (PI / 2);
 
 				pca_new = new double[PC_DIM_XY + 2][][];
@@ -266,11 +268,11 @@ public class Posecell_Iteration
 				pca90[1][1][0] = pca90[1][1][0] + pca_new[pca_new.length - 1][pca_new.length - 1][0];
 
 				// unrotate the pose cell xy layer
-				for (int i = 0; i < poseCells.weights[1].length; i++)
+				for (int i = 0; i < posecells[1].length; i++)
 				{
-					for (int j = 0; j < poseCells.weights[2].length; j++)
+					for (int j = 0; j < posecells[2].length; j++)
 					{
-						poseCells.weights[i][j][dir_pc] = rot90(pca90, 0, (int)(4 - Math.floor(dir * 2 / PI)))[i][j][dir_pc];
+						posecells[i][j][dir_pc] = rot90(pca90, 0, (int)(4 - Math.floor(dir * 2 / PI)))[i][j][dir_pc];
 					}
 				}
 			}
@@ -299,9 +301,9 @@ public class Posecell_Iteration
 			{
 				for (int j = 0; j < PC_DIM_XY; j++)
 				{
-					double toUse = poseCells.weights[i][j][constThird];			
-					poseCells.weights[i][j][constThird] = (toUse * (1 - vtrans)) + (
-							multiply_elements(circshift(poseCells.weights, direct), vtrans)[i][j][constThird]);
+					double toUse = posecells[i][j][constThird];			
+					posecells[i][j][constThird] = (toUse * (1 - vtrans)) + (
+							multiply_elements(circshift(posecells, direct), vtrans)[i][j][constThird]);
 				}
 			}
 		}

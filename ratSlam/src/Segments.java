@@ -7,6 +7,7 @@ import org.ejml.simple.SimpleMatrix;
 public class Segments 
 {
 	double[] seg1, seg2, cdiff;
+
 	int cwl;
 	int slen;
 	double[] segment;
@@ -17,11 +18,15 @@ public class Segments
 		seg2 = s2;
 		slen = len;
 //		cdiff = new double [seg1.length];
+
 		this.cwl = cwl;
 	}
 	
-	public double[] compare_segments()
-	{
+	/**
+	 * [offset, sdif] = rs_compare_segments(seg1, seg2, slen, cwl)
+	 * determine the best match between seg1 and seg2 of size cw1 allowing for shifts of up to slen
+	 */
+	public double[] compare_segments() {
 		// assume a large difference
 		double mindiff = 1000000;
 		double minoffset = 0;
@@ -38,6 +43,7 @@ public class Segments
 		
 		// for each offset sum the abs difference between the two segments
 		// for offset = 0 : slen
+
 //		for (int offset = 0, index = 0; offset < slen; offset = offset + 5, index++){
 //			cdiff[index] = 0;
 //			for (int i = offset + 1, j = 0; i < cwl && j < (cwl - offset); i++, j++) {
@@ -92,6 +98,7 @@ public class Segments
 		        mindiff = ddiff;
 		        minoffset = offset;
 		    }
+
 		}
 		
 		return new double[]{minoffset, mindiff};

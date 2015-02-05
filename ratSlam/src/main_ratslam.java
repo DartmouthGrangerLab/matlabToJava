@@ -39,8 +39,8 @@ public class main_ratslam {
 	static int PC_W_I_VAR = 2;
 
 	// Posecell excitation and inhibition 3D weight matrices
-	Posecells PC_W_EXCITE = new Posecells(PC_W_E_DIM, PC_W_E_VAR);
-	Posecells PC_W_INHIB = new Posecells(PC_W_I_DIM, PC_W_I_VAR);
+	//TODO Integrate Hanna Posecell work:	Posecells PC_W_EXCITE = new Posecells(PC_W_E_DIM, PC_W_E_VAR);
+	//TODO Integrate Hanna Posecell work:	Posecells PC_W_INHIB = new Posecells(PC_W_I_DIM, PC_W_I_VAR);
 
 	// Convenience constants
 	double PC_W_E_DIM_HALF = Math.floor(PC_W_E_DIM / 2);
@@ -86,12 +86,12 @@ public class main_ratslam {
 	static int[] IMAGE_VROT_Y_RANGE =  Util.setRange(75, 240); //st_lucia constants
 	static double [] prev_vrot_image_x_sums;
 	static double [] prev_vtrans_image_x_sums;
-	
+
 	static int POSECELL_VTRANS_SCALING = 100;
 
 	int[] time_delta_s;
 	// start stopwatch here
-	
+
 	static String MOV_FILE = "file:///Users/bentito/Downloads/stlucia_testloop.avi";
 	// Main method of ratSLAM, not including constants (which are above, for the most part)
 	public static void main(String[] args) {
@@ -106,7 +106,7 @@ public class main_ratslam {
 		// Set the initial position in the odo and experience map
 		prev_vrot_image_x_sums = new double[IMAGE_ODO_X_RANGE.length];
 		prev_vtrans_image_x_sums = new double[IMAGE_ODO_X_RANGE.length];
-		
+
 		Odo initOdo = new Odo (0, PI/2, prev_vtrans_image_x_sums, prev_vrot_image_x_sums, IMAGE_VTRANS_Y_RANGE,
 				IMAGE_VROT_Y_RANGE, IMAGE_ODO_X_RANGE);
 
@@ -123,15 +123,15 @@ public class main_ratslam {
 		ArrayList <Odo> odos = new ArrayList <Odo> ();
 
 		int numvts = 1;
-		
+
 		// Need to fix parameters; more specifically, array sizes
 		vts.add( new VT(numvts, new double[]{},1.0,x_pc,y_pc,th_pc,1,1, new Experience[5]));
 		odos.add(initOdo);
 
-//		vt[numvts].template_decay = 1.0;
+		//		vt[numvts].template_decay = 1.0;
 		VT vtcurr = (VT) vts.get(0);
 		vtcurr.template_decay = 1.0;
-		
+
 		Experience[] exps = new Experience[5];
 		// figure out where to get id
 		exps[1] = new Experience(0, x_pc, y_pc, th_pc, 0, 0, (PI/2), 1, 0, new Link[5]);
@@ -145,70 +145,70 @@ public class main_ratslam {
 			// figure out varargin in Java
 			// should be an array that is passed to the main(?) - double check
 			switch(args[i]) {
-				case "RENDER_RATE": RENDER_RATE = Integer.parseInt(args[i+1]);
-					break;
-				case "BLOCK_READ": BLOCK_READ = Integer.parseInt(args[i+1]);
-					break;
-				// HK EDIT START
-				case "START_FRAME": START_FRAME = Integer.parseInt(args[i+1]);
-					break;
-				case "END_FRAME": END_FRAME = Integer.parseInt(args[i+1]);
-					break;
-					
-				case "PC_VT_INJECT_ENERGY": PC_VT_INJECT_ENERGY = Integer.parseInt(args[i+1]);
-					break;
-				case "IMAGE_VT_Y_RANGE": IMAGE_VT_Y_RANGE = Util.setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
-					break;
-				case "IMAGE_VT_X_RANGE": IMAGE_VT_X_RANGE = Util.setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
-//					break;
-//				case "VT_SHIFT_MATCH": VT_SHIFT_MATCH = Integer.parseInt(args[i+1]);
-//					break;
-//				case "VT_MATCH_THRESHOLD": VT_MATCH_THRESHOLD = Integer.parseInt(args[i+1]);
-//					break;
-//					
-//				case "VTRANS_SCALE": VTRANS_SCALE = Integer.parseInt(args[i+1]);
-//					break;
-//				case "VISUAL_ODO_SHIFT_MATCH": VISUAL_ODO_SHIFT_MATCH = Integer.parseInt(args[i+1]);
-//					break;
-//				case "IMAGE_VTRANS_Y_RANGE": IMAGE_VTRANS_Y_RANGE = Integer.parseInt(args[i+1]);
-//					break;
-//				case "IMAGE_VROT_Y_RANGE": IMAGE_VROT_Y_RANGE = Integer.parseInt(args[i+1]);
-//					break;
-//				case "IMAGE_ODO_X_RANGE": IMAGE_ODO_X_RANGE = Integer.parseInt(args[i+1]);
-//					break;
-//				
-//				case "EXP_DELTA_PC_THRESHOLD": EXP_DELTA_PC_THRESHOLD = Integer.parseInt(args[i+1]);
-//					break;
-//				case "EXP_CORRECTION": EXP_CORRECTION = Integer.parseInt(args[i+1]);
-//					break;
-//				case "EXP_LOOPS": EXP_LOOPS = Integer.parseInt(args[i+1]);
-//					break;
-//				
-//				case "ODO_ROT_SCALING": ODO_ROT_SCALING = Integer.parseInt(args[i+1]);
-//					break;
-//				case "POSECELL_VTRANS_SCALING": POSECELL_VTRANS_SCALING = Integer.parseInt(args[i+1]);
-//					break;
-				// HK EDIT END
+			case "RENDER_RATE": RENDER_RATE = Integer.parseInt(args[i+1]);
+			break;
+			case "BLOCK_READ": BLOCK_READ = Integer.parseInt(args[i+1]);
+			break;
+			// HK EDIT START
+			case "START_FRAME": START_FRAME = Integer.parseInt(args[i+1]);
+			break;
+			case "END_FRAME": END_FRAME = Integer.parseInt(args[i+1]);
+			break;
+
+			case "PC_VT_INJECT_ENERGY": PC_VT_INJECT_ENERGY = Integer.parseInt(args[i+1]);
+			break;
+			case "IMAGE_VT_Y_RANGE": IMAGE_VT_Y_RANGE = Util.setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
+			break;
+			case "IMAGE_VT_X_RANGE": IMAGE_VT_X_RANGE = Util.setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
+			//					break;
+			//				case "VT_SHIFT_MATCH": VT_SHIFT_MATCH = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "VT_MATCH_THRESHOLD": VT_MATCH_THRESHOLD = Integer.parseInt(args[i+1]);
+			//					break;
+			//					
+			//				case "VTRANS_SCALE": VTRANS_SCALE = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "VISUAL_ODO_SHIFT_MATCH": VISUAL_ODO_SHIFT_MATCH = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "IMAGE_VTRANS_Y_RANGE": IMAGE_VTRANS_Y_RANGE = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "IMAGE_VROT_Y_RANGE": IMAGE_VROT_Y_RANGE = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "IMAGE_ODO_X_RANGE": IMAGE_ODO_X_RANGE = Integer.parseInt(args[i+1]);
+			//					break;
+			//				
+			//				case "EXP_DELTA_PC_THRESHOLD": EXP_DELTA_PC_THRESHOLD = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "EXP_CORRECTION": EXP_CORRECTION = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "EXP_LOOPS": EXP_LOOPS = Integer.parseInt(args[i+1]);
+			//					break;
+			//				
+			//				case "ODO_ROT_SCALING": ODO_ROT_SCALING = Integer.parseInt(args[i+1]);
+			//					break;
+			//				case "POSECELL_VTRANS_SCALING": POSECELL_VTRANS_SCALING = Integer.parseInt(args[i+1]);
+			//					break;
+			// HK EDIT END
 			}
 		}
-		
-//		vtcurr.template = new double[IMAGE_VT_X_RANGE.length];
 
-		
+		//		vtcurr.template = new double[IMAGE_VT_X_RANGE.length];
+
+
 		int frameIdx = 0;
-	    while (vs.getState()==VideoSource.NOT_READY) { 
-	        try { Thread.sleep(100); } catch (Exception e) { } 
-	    } 
-	    if (vs.getState()==VideoSource.ERROR) { 
-	        System.out.println("Error while initing"+args[0]); 
-	        return; 
-	    }
+		while (vs.getState()==VideoSource.NOT_READY) { 
+			try { Thread.sleep(100); } catch (Exception e) { } 
+		} 
+		if (vs.getState()==VideoSource.ERROR) { 
+			System.out.println("Error while initing"+args[0]); 
+			return; 
+		}
 		int frameCount = vs.getFrameCount();
 		END_FRAME = frameCount;
 		Frame frame = new Frame(); 
-	    frame.setVisible(true); 
-	    int vt_id;
-	    
+		frame.setVisible(true); 
+		int vt_id;
+
 		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++)
 		{
 			// save the experience map information to the disk for later playback
@@ -218,7 +218,7 @@ public class main_ratslam {
 				// save
 				//if (ODO_FILE != 0)
 				//{
-					
+
 				//}
 			} else {
 				BufferedImage img = vs.getFrame(frameIdx);
@@ -231,8 +231,8 @@ public class main_ratslam {
 				Visual_Odometry vo = new Visual_Odometry ();
 				vo.visual_odometry(img, odos);
 				// TODO: use odoData to track odo data for comparison as per Matlab main
-				Posecell_Iteration pc = new Posecell_Iteration(odos.get(vts.size()).vtrans, odos.get(vts.size()).vrot, Posecells p, vts);
-//				pc.iteration(vt_id, odo.vtrans * POSECELL_VTRANS_SCALING, odo.vrot);
+				//TODO Integrate Hanna Posecell work:				Posecell_Iteration pc = new Posecell_Iteration(odos.get(vts.size()).vtrans, odos.get(vts.size()).vrot, Posecells p, vts);
+				//				pc.iteration(vt_id, odo.vtrans * POSECELL_VTRANS_SCALING, odo.vrot);
 				//TODO rs_get_posecell_xyth()
 				//TODO rs_experience_map_iteration?
 			}
@@ -240,19 +240,19 @@ public class main_ratslam {
 
 		// call functions
 	}
-	
+
 	public static void drawFrame(Frame frame, BufferedImage image,  Image grayImg, int index) { 
-	    if (image!=null) { 
-	        frame.setSize(image.getWidth(), image.getWidth()); 
-	        frame.getGraphics().drawImage(grayImg, 0, 0, null);
-	        try {
+		if (image!=null) { 
+			frame.setSize(image.getWidth(), image.getWidth()); 
+			frame.getGraphics().drawImage(grayImg, 0, 0, null);
+			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-	    } else { 
-	        System.out.println("null image"); 
-	    } 
-	     
+		} else { 
+			System.out.println("null image"); 
+		} 
+
 	} 
 }

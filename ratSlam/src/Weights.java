@@ -1,5 +1,13 @@
-public class Weights 
-{
+/**
+ * HANNA'S EDIT:
+ * 
+ * Not sure what this class is for... not used anywhere in the project. 
+ * Also, create_posecell_weights() was originally duplicated in Posecells.java (which I modified).
+ * Maybe we can discard this class??
+ * 
+ */
+
+public class Weights {
 	final double PI = Math.PI;
 	double dim_center = 0;
 	double[][][] weights = null;
@@ -14,8 +22,7 @@ public class Weights
 	}
 	
 	// Create array of posecell weights
-	public double[][][] create_posecell_weights(int dim, int var)
-	{
+	public double[][][] create_posecell_weights(int dim, int var) {
 		// Creates a 3D normal distribution based on given dimension and variance
 		
 		// Create 3-dimensional array of posecell weights
@@ -27,12 +34,9 @@ public class Weights
 		// Set up weights for posecells
 		// Sum up elements of array for total weight
 		double total = 0;
-		for (int x = 0; x < dim; x++)
-		{
-			for (int y = 0; y < dim; y++)
-			{
-				for (int z = 0; z < dim; z++)
-				{
+		for (int x = 0; x < dim; x++) {
+			for (int y = 0; y < dim; y++) {
+				for (int z = 0; z < dim; z++) {
 					double b = -1 * (x - dim_center)*(x-dim_center);
 					double c = (y - dim_center) * (y - dim_center);
 					double d = (z - dim_center) * (z - dim_center);
@@ -43,17 +47,13 @@ public class Weights
 		}
 
 		// Divide each weight by the total weight
-		for (int x = 0; x < dim; x++)
-		{
-			for (int y = 0; y < dim; y++)
-			{
-				for (int z = 0; z < dim; z++)
-				{
+		for (int x = 0; x < dim; x++) {
+			for (int y = 0; y < dim; y++) {
+				for (int z = 0; z < dim; z++) {
 					weight[x][y][z] = weight[x][y][z]/total;
 				}
 			}
 		}	
-		
 		return weight;
 	}
 }
