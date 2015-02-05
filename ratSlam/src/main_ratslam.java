@@ -38,10 +38,19 @@ public class main_ratslam {
 	static int PC_W_E_VAR = 1;
 	static int PC_W_I_VAR = 2;
 
-	// Posecell excitation and inhibition 3D weight matrices
-	//TODO Integrate Hanna Posecell work:	Posecells PC_W_EXCITE = new Posecells(PC_W_E_DIM, PC_W_E_VAR);
-	//TODO Integrate Hanna Posecell work:	Posecells PC_W_INHIB = new Posecells(PC_W_I_DIM, PC_W_I_VAR);
+	// Set the initial position in the pose network
+	static int x_pc = (PC_DIM_XY / 2) + 1;
+	static int y_pc = (PC_DIM_XY / 2) + 1;
+	static int th_pc = (PC_DIM_TH / 2) + 1;
 
+	// Posecell excitation and inhibition 3D weight matrices
+	static Posecells pc = new Posecells(PC_W_E_DIM, PC_W_E_VAR, PC_W_I_DIM, PC_W_I_VAR, 
+			PC_DIM_XY, PC_DIM_TH, x_pc, y_pc, y_pc);
+	
+	double[][][] PC_W_EXCITE = pc.pc_w_excite;
+	double[][][] PC_W_INHIB = pc.pc_w_inhib;
+	double[][][] Posecells = pc.posecells;
+	
 	// Convenience constants
 	double PC_W_E_DIM_HALF = Math.floor(PC_W_E_DIM / 2);
 	double PC_W_I_DIM_HALF = Math.floor(PC_W_I_DIM / 2);
@@ -76,8 +85,6 @@ public class main_ratslam {
 	static int RENDER_RATE = 1;
 	static int BLOCK_READ = 10;
 
-	static int[][][] Posecells =  new int[PC_DIM_XY][PC_DIM_XY][PC_DIM_TH];
-
 	// Other variables
 	static int[] IMAGE_VT_Y_RANGE = Util.setRange(1, IMAGE_Y_SIZE);
 	static int[] IMAGE_VT_X_RANGE =  Util.setRange(1, IMAGE_X_SIZE);
@@ -100,7 +107,7 @@ public class main_ratslam {
 		int y_pc = (int) (Math.floor(PC_DIM_XY / 2.0) + 1);
 		int th_pc = (int) (Math.floor(PC_DIM_TH / 2.0) + 1);
 
-		Posecells[x_pc][y_pc][th_pc] = 1;
+//		Posecells[x_pc][y_pc][th_pc] = 1;
 		int[] max_act_xyth_path = {x_pc, y_pc, th_pc};
 
 		// Set the initial position in the odo and experience map
@@ -207,7 +214,6 @@ public class main_ratslam {
 		END_FRAME = frameCount;
 		Frame frame = new Frame(); 
 		frame.setVisible(true); 
-		int vt_id;
 
 		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++)
 		{
@@ -230,9 +236,9 @@ public class main_ratslam {
 				viewTemplate.visual_template();
 				Visual_Odometry vo = new Visual_Odometry ();
 				vo.visual_odometry(img, odos);
-				// TODO: use odoData to track odo data for comparison as per Matlab main
-				//TODO Integrate Hanna Posecell work:				Posecell_Iteration pc = new Posecell_Iteration(odos.get(vts.size()).vtrans, odos.get(vts.size()).vrot, Posecells p, vts);
-				//				pc.iteration(vt_id, odo.vtrans * POSECELL_VTRANS_SCALING, odo.vrot);
+				//TODO: use odoData to track odo data for comparison as per Matlab main
+				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(vts.size()).vtrans, odos.get(vts.size()).vrot, pc, vts);
+				//TODO pc.iteration();
 				//TODO rs_get_posecell_xyth()
 				//TODO rs_experience_map_iteration?
 			}

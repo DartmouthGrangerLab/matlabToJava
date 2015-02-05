@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 // rs_posecell_iteration (vt_id, vtrans, vrot)
 public class Posecell_Iteration 
 {
@@ -35,18 +37,18 @@ public class Posecell_Iteration
 
 	// Arguments in Constructor
 	int vt_id;
-	int vtrans;
-	int vrot;
+	double vtrans;
+	double vrot;
 	Posecells pc;
-	VT[] vt;
+	ArrayList <VT> vts;
 
-	public Posecell_Iteration(int vtId, int trans, int rot, Posecells p, VT[] v)
+	public Posecell_Iteration(int vtId, double trans, double rot, Posecells p, ArrayList vts)
 	{
 		vt_id = vtId;
 		vtrans = trans;
 		vrot = rot;
 		pc = p;
-		vt = v;
+		this.vts = vts;
 		posecells = p.posecells;
 		PC_W_EXCITE = pc.pc_w_excite;
 		PC_W_INHIB = pc.pc_w_inhib;
@@ -55,17 +57,17 @@ public class Posecell_Iteration
 	public void iteration()
 	{
 		// if this isn't a new vt, then add the energy at its associated posecell location
-		if (vt[vt_id].first != 1)
+		if (vts.get(vt_id).first != 1)
 		{
-			act_x = Math.min(Math.max(Math.round(vt[vt_id].x_pc), 1), PC_DIM_XY);
-			act_y = Math.min(Math.max(Math.round(vt[vt_id].y_pc), 1), PC_DIM_XY);
-			act_th = Math.min(Math.max(Math.round(vt[vt_id].th_pc), 1), PC_DIM_TH);
+			act_x = Math.min(Math.max(Math.round(vts.get(vt_id).x_pc), 1), PC_DIM_XY);
+			act_y = Math.min(Math.max(Math.round(vts.get(vt_id).y_pc), 1), PC_DIM_XY);
+			act_th = Math.min(Math.max(Math.round(vts.get(vt_id).th_pc), 1), PC_DIM_TH);
 
 			// This decays the amount of energy that's injected at the vt's posecell location
 			// This is important as the Posecells poseCells will erroneously snap
 			// for bad vt matches that occur over long periods (ex. a bad match that occurs while agent is stationary)
 			// This means that multiple vt's need to be recognized for a snap to happen
-			energy = PC_VT_INJECT_ENERGY * (1/30) * (30 - Math.exp(1.2 * vt[vt_id].template_decay));
+			energy = PC_VT_INJECT_ENERGY * (1/30) * (30 - Math.exp(1.2 * vts.get(vt_id).template_decay));
 			if (energy > 0)
 			{
 				posecells[act_x][act_y][act_th] += energy;
