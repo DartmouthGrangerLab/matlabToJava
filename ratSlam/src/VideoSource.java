@@ -16,8 +16,6 @@ import javax.media.util.BufferToImage;
 	String _videoFilename; 
 	FramePositioningControl _framePositioningControl; 
 	FrameGrabbingControl _frameGrabbingControl;
-	public int vidHeight;
-	public int vidWidth;
 	
 	private int _state; 
 	// the filename must contain protocol,  
@@ -79,10 +77,6 @@ import javax.media.util.BufferToImage;
 	                img.getHeight(null), BufferedImage.TYPE_INT_ARGB); 
 	        Graphics2D g = bi.createGraphics(); 
 	        g.drawImage(img, 0,0, null);
-	        if (index == 0) { // one time only get the video height and width for use elsewhere, this could be more efficient
-	        	this.vidHeight = bi.getHeight();
-	        	this.vidWidth = bi.getWidth();
-	        }
 	        return bi; 
 	    } 
 	    return null; 

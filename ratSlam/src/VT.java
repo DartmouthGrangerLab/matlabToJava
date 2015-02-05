@@ -9,12 +9,12 @@ public class VT
 	int y_pc;
 	int th_pc;
 	Experience[] exps;
-	int[][] template;
+	double [] template;
 	//Experience exps = new Experience();
 	// find out if 'id' is a keyword 
 	int id = 0;
 	
-	public VT(int numvts, int[][] img_sums, double decay, int xPc, int yPc, int thPc, int f, int numE, Experience[] exp)
+	public VT(int numvts, double [] img_sums, double decay, int xPc, int yPc, int thPc, int f, int numE, Experience[] exp)
 	{
 		id = numvts;
 		template = img_sums;

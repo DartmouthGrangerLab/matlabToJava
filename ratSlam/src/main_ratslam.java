@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.awt.image.ImageProducer;
+import java.util.ArrayList;
 
 public class main_ratslam {
 	// My Constants
@@ -78,13 +79,15 @@ public class main_ratslam {
 	static int[][][] Posecells =  new int[PC_DIM_XY][PC_DIM_XY][PC_DIM_TH];
 
 	// Other variables
-	static int[] IMAGE_VT_Y_RANGE = setRange(1, IMAGE_Y_SIZE);
-	static int[] IMAGE_VT_X_RANGE = setRange(1, IMAGE_X_SIZE);
-	static int[] IMAGE_ODO_X_RANGE = setRange(1, IMAGE_X_SIZE);
-	static int[] IMAGE_VTRANS_Y_RANGE = setRange(1, IMAGE_Y_SIZE);
-	static int[] IMAGE_VROT_Y_RANGE = setRange(1, IMAGE_Y_SIZE);
-	static int[][] prev_vrot_image_x_sums;
-	static int[][] prev_vtrans_image_x_sums;
+	static int[] IMAGE_VT_Y_RANGE = Util.setRange(1, IMAGE_Y_SIZE);
+	static int[] IMAGE_VT_X_RANGE =  Util.setRange(1, IMAGE_X_SIZE);
+	static int[] IMAGE_ODO_X_RANGE =  Util.setRange((180+15), (460+15)); //st_lucia constants
+	static int[] IMAGE_VTRANS_Y_RANGE =  Util.setRange(270, 430); //st_lucia constants
+	static int[] IMAGE_VROT_Y_RANGE =  Util.setRange(75, 240); //st_lucia constants
+	static double [] prev_vrot_image_x_sums;
+	static double [] prev_vtrans_image_x_sums;
+	
+	static int POSECELL_VTRANS_SCALING = 100;
 
 	int[] time_delta_s;
 	// start stopwatch here
@@ -101,7 +104,11 @@ public class main_ratslam {
 		int[] max_act_xyth_path = {x_pc, y_pc, th_pc};
 
 		// Set the initial position in the odo and experience map
-		double[] odo = {0, 0, (PI / 2)};
+		prev_vrot_image_x_sums = new double[IMAGE_ODO_X_RANGE.length];
+		prev_vtrans_image_x_sums = new double[IMAGE_ODO_X_RANGE.length];
+		
+		Odo initOdo = new Odo (0, PI/2, prev_vtrans_image_x_sums, prev_vrot_image_x_sums, IMAGE_VTRANS_Y_RANGE,
+				IMAGE_VROT_Y_RANGE, IMAGE_ODO_X_RANGE);
 
 		// Specify movie and frames to read
 		// In our case, specify image size, in x and y direction
@@ -112,12 +119,19 @@ public class main_ratslam {
 
 		// store size in a variable
 		// 5 used as random size
-		VT[] vt = new VT[5];
+		ArrayList <VT> vts = new ArrayList <VT> ();
+		ArrayList <Odo> odos = new ArrayList <Odo> ();
+
 		int numvts = 1;
 		
 		// Need to fix parameters; more specifically, array sizes
-		vt[1] = new VT(numvts, new int[][]{},1.0,x_pc,y_pc,th_pc,1,1, new Experience[5]);
-		vt[numvts].template_decay = 1.0;
+		vts.add( new VT(numvts, new double[]{},1.0,x_pc,y_pc,th_pc,1,1, new Experience[5]));
+		odos.add(initOdo);
+
+//		vt[numvts].template_decay = 1.0;
+		VT vtcurr = (VT) vts.get(0);
+		vtcurr.template_decay = 1.0;
+		
 		Experience[] exps = new Experience[5];
 		// figure out where to get id
 		exps[1] = new Experience(0, x_pc, y_pc, th_pc, 0, 0, (PI/2), 1, 0, new Link[5]);
@@ -143,9 +157,9 @@ public class main_ratslam {
 					
 				case "PC_VT_INJECT_ENERGY": PC_VT_INJECT_ENERGY = Integer.parseInt(args[i+1]);
 					break;
-				case "IMAGE_VT_Y_RANGE": IMAGE_VT_Y_RANGE = setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
+				case "IMAGE_VT_Y_RANGE": IMAGE_VT_Y_RANGE = Util.setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
 					break;
-				case "IMAGE_VT_X_RANGE": IMAGE_VT_X_RANGE = setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
+				case "IMAGE_VT_X_RANGE": IMAGE_VT_X_RANGE = Util.setRange(Integer.parseInt(args[i+1]), Integer.parseInt(args[i+2]));
 //					break;
 //				case "VT_SHIFT_MATCH": VT_SHIFT_MATCH = Integer.parseInt(args[i+1]);
 //					break;
@@ -176,11 +190,11 @@ public class main_ratslam {
 //					break;
 				// HK EDIT END
 			}
-
-			vt[1].template = new int[1][IMAGE_VT_X_RANGE.length];
-			prev_vrot_image_x_sums = new int[1][IMAGE_ODO_X_RANGE.length];
-			prev_vtrans_image_x_sums = new int[1][IMAGE_ODO_X_RANGE.length];
 		}
+		
+//		vtcurr.template = new double[IMAGE_VT_X_RANGE.length];
+
+		
 		int frameIdx = 0;
 	    while (vs.getState()==VideoSource.NOT_READY) { 
 	        try { Thread.sleep(100); } catch (Exception e) { } 
@@ -210,25 +224,21 @@ public class main_ratslam {
 				BufferedImage img = vs.getFrame(frameIdx);
 				ImageFilter filter = new GrayFilter(true, 0);  
 				ImageProducer producer = new FilteredImageSource(img.getSource(), filter);  
-				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  
-				
+				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  	
 				drawFrame(frame,img, grayImg,frameIdx);
-				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, vs.vidWidth, vs.vidHeight, exps);
+				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, img.getWidth(), img.getHeight(), exps, vts);
 				viewTemplate.visual_template();
+				Visual_Odometry vo = new Visual_Odometry ();
+				vo.visual_odometry(img, odos);
+				// TODO: use odoData to track odo data for comparison as per Matlab main
+				Posecell_Iteration pc = new Posecell_Iteration(odos.get(vts.size()).vtrans, odos.get(vts.size()).vrot, Posecells p, vts);
+//				pc.iteration(vt_id, odo.vtrans * POSECELL_VTRANS_SCALING, odo.vrot);
+				//TODO rs_get_posecell_xyth()
+				//TODO rs_experience_map_iteration?
 			}
 		}
 
 		// call functions
-	}
-
-	// Creates 1-dimensional arrays that mimic MATLAB colon operator
-	// HK EDIT (to allow for range that doesn't start with 1)
-	private static int[] setRange(int lower, int upper) {
-		int[] toReturn = new int[upper - lower + 1];
-		for (int i = 0, j = lower; i < toReturn.length && j <= upper; i++, j++) {
-			toReturn[i] = j;
-		}
-		return toReturn;
 	}
 	
 	public static void drawFrame(Frame frame, BufferedImage image,  Image grayImg, int index) { 
@@ -240,7 +250,6 @@ public class main_ratslam {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-	        System.out.println("Image at index: "+index); 
 	    } else { 
 	        System.out.println("null image"); 
 	    } 
