@@ -46,8 +46,9 @@ public class Visual_Odometry
 		int[] IMAGE_ODO_X_RANGE = odos.get(0).IMAGE_ODO_X_RANGE;
 
 		int [][] raw_image = Util.get2DarrayIntsFromImg(img);
-		int FOV_DEG = 50;
-		int dpp = FOV_DEG / raw_image[1].length;
+		double FOV_DEG = 50;
+		double width = raw_image[1].length;
+		double degreesPerPixel = FOV_DEG / width;
 		
 		
 		int currOdo = odos.size();
@@ -123,7 +124,7 @@ public class Visual_Odometry
 		
 		double minoffset = min_vals2[0];
 
-		vrot = minoffset * dpp * PI / 180;
+		vrot = minoffset * degreesPerPixel * PI / 180;
 		
 		odos.get(currOdo).prev_vrot_image_x_sums = imageXSums2.data;
 		odos.get(currOdo).vtrans = vtrans;

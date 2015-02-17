@@ -103,12 +103,12 @@ public class main_ratslam {
 	// Main method of ratSLAM, not including constants (which are above, for the most part)
 	public static void main(String[] args) {
 		// Set initial position in the pose network
-		int x_pc = (int) (Math.floor(PC_DIM_XY / 2.0) + 1);
-		int y_pc = (int) (Math.floor(PC_DIM_XY / 2.0) + 1);
-		int th_pc = (int) (Math.floor(PC_DIM_TH / 2.0) + 1);
+		double x_pc = (Math.floor(PC_DIM_XY / 2.0) + 1);
+		double y_pc = (Math.floor(PC_DIM_XY / 2.0) + 1);
+		double th_pc = (Math.floor(PC_DIM_TH / 2.0) + 1);
 
 //		Posecells[x_pc][y_pc][th_pc] = 1;
-		int[] max_act_xyth_path = {x_pc, y_pc, th_pc};
+		double[] max_act_xyth_path = {x_pc, y_pc, th_pc};
 
 		// Set the initial position in the odo and experience map
 		prev_vrot_image_x_sums = new double[IMAGE_ODO_X_RANGE.length];
@@ -128,20 +128,22 @@ public class main_ratslam {
 		// 5 used as random size
 		ArrayList <VT> vts = new ArrayList <VT> ();
 		ArrayList <Odo> odos = new ArrayList <Odo> ();
+		ArrayList <Experience> exps = new ArrayList <Experience> ();
+		ArrayList <Link> links = new ArrayList <Link> ();
 
 		int numvts = 1;
 
 		// Need to fix parameters; more specifically, array sizes
-		vts.add( new VT(numvts, new double[]{},1.0,x_pc,y_pc,th_pc,1,1, new Experience[5]));
+		vts.add( new VT(numvts, new double[]{},1.0,x_pc,y_pc,th_pc,1,1));
 		odos.add(initOdo);
 
 		//		vt[numvts].template_decay = 1.0;
 		VT vtcurr = (VT) vts.get(0);
 		vtcurr.template_decay = 1.0;
 
-		Experience[] exps = new Experience[5];
+//		Experience[] exps = new Experience[5];
 		// figure out where to get id
-		exps[1] = new Experience(0, x_pc, y_pc, th_pc, 0, 0, (PI/2), 1, 0, new Link[5]);
+		exps.add(new Experience(0, x_pc, y_pc, th_pc, 0, 0, (PI/2), 1, 0, links));
 
 		// Process the parameters
 		//  nargin: number of arguments passed to main
@@ -215,8 +217,7 @@ public class main_ratslam {
 		Frame frame = new Frame(); 
 		frame.setVisible(true); 
 
-		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++)
-		{
+		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++) {
 			// save the experience map information to the disk for later playback
 			// read the avi file (in our case, the photo file) and record the delta time
 			if (frameIdx % BLOCK_READ == 0)
@@ -232,19 +233,21 @@ public class main_ratslam {
 				ImageProducer producer = new FilteredImageSource(img.getSource(), filter);  
 				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  	
 				drawFrame(frame,img, grayImg,frameIdx);
-				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, img.getWidth(), img.getHeight(), exps, vts);
+				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, img.getWidth(), img.getHeight(), vts);
 				viewTemplate.visual_template();
 				Visual_Odometry vo = new Visual_Odometry ();
 				vo.visual_odometry(img, odos);
-				//TODO: use odoData to track odo data for comparison as per Matlab main
-				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(vts.size()).vtrans, odos.get(vts.size()).vrot, pc, vts);
+				//XXX: use odoData to track odo data for comparison as per Matlab main
+				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot, pc, vts);
 				//TODO pc.iteration();
 				//TODO rs_get_posecell_xyth()
-				//TODO rs_experience_map_iteration?
+//				Exp_Map_Iteration(int vt_id, double vtrans, double vrot, double x_pc, double y_pc, double th_pc, ArrayList <VT> vt)
+				th_pc = 25*Math.random(); // debugging Exp_Map_Iteration before working Posecell code available
+				Exp_Map_Iteration exp = new Exp_Map_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot,
+						x_pc, y_pc, th_pc, vts , exps);
+				exp.iteration();
 			}
 		}
-
-		// call functions
 	}
 
 	public static void drawFrame(Frame frame, BufferedImage image,  Image grayImg, int index) { 

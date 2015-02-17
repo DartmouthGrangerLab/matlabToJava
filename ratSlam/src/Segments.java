@@ -33,7 +33,7 @@ public class Segments
 		double ddiff = 0;
 		
 //		double[] diffs = new double[slen];
-		SimpleMatrix diffs = new SimpleMatrix (slen, slen); // What the heck is this matrix here for, visualization? Has no impact either here or the Matlab original
+//		SimpleMatrix diffs = new SimpleMatrix (slen, slen); // What the heck is this matrix here for, visualization? Has no impact either here or the Matlab original
 		DenseMatrix64F seg1 = DenseMatrix64F.wrap(cwl, 1, this.seg1);
 		DenseMatrix64F seg2 = DenseMatrix64F.wrap(cwl, 1, this.seg2);
 		SimpleMatrix sseg1 = SimpleMatrix.wrap(seg1);
@@ -42,61 +42,27 @@ public class Segments
 		Equation eq = new Equation ();
 		
 		// for each offset sum the abs difference between the two segments
-		// for offset = 0 : slen
-
-//		for (int offset = 0, index = 0; offset < slen; offset = offset + 5, index++){
-//			cdiff[index] = 0;
-//			for (int i = offset + 1, j = 0; i < cwl && j < (cwl - offset); i++, j++) {
-////				cdiff[index] += Math.abs(seg1[i] - seg2[j]);
-//			}
-//			cdiff[index] = cdiff[index] / (cwl - offset);
-//			diffs.set((slen - offset - 1), cdiff[index]);
-//			if (cdiff[index] < mindiff) {
-//				mindiff = cdiff[index];
-//				minoffset = offset;
-//			}
-//		}
 		
-		
-//		for each offset sum the abs difference between the two segments
 		for (int offset = 0; offset <this.slen; offset++) {
-//		    cdiff = abs(seg1(1 + offset:cwl) - seg2(1:cwl - offset));
 		    cdiff = sseg1.extractMatrix(offset, cwl, 0, 1).minus(sseg2.extractMatrix(0, cwl-offset, 0, 1));
 		    eq.alias(cdiff, "cdiff");
 		    eq.process ("cdiff = abs(cdiff)");
-//		    cdiff = sum(cdiff) / (cwl - offset); 
 		    ddiff = cdiff.elementSum() / (cwl - offset);
-//		    diffs(slen - offset + 1) = cdiff;
 		    if (ddiff < mindiff) {
 		        mindiff = ddiff;
 		        minoffset = offset;
 		    }
 		}
 		
-		// for offset = 1 : slen
-//		for (int offset = 0, index2 = 0; offset < slen; offset += 5, index2++) {
-//			for (int i = 0, j = 1 + offset; i < (cwl - offset) && j < cwl; i++, j++) {
-////				cdiff[index2] += Math.abs(seg1[i] - seg2[j]);
-//			}
-//			cdiff[index2] = cdiff[index2] / (cwl - offset);
-//			diffs.set((slen + offset - 1), cdiff[index2]);
-//			if (cdiff[index2] < mindiff) {
-//				mindiff = cdiff[index2];
-//				minoffset = -1 * offset;
-//			}
-//		}
-		
 		for (int offset = 0; offset <this.slen; offset++) {
-//		    cdiff = abs(seg1(1 + offset:cwl) - seg2(1:cwl - offset));
-		    cdiff = sseg1.extractMatrix(offset, cwl, 0, 1).minus(sseg2.extractMatrix(0, cwl-offset, 0, 1));
+		    cdiff = sseg1.extractMatrix(0, cwl-offset, 0, 1).minus(sseg2.extractMatrix(offset, cwl, 0, 1));
 		    eq.alias(cdiff, "cdiff");
 		    eq.process ("cdiff = abs(cdiff)");
-//		    cdiff = sum(cdiff) / (cwl - offset); 
 		    ddiff = cdiff.elementSum() / (cwl - offset);
-//		    diffs(slen - offset + 1) = cdiff;
+
 		    if (ddiff < mindiff) {
 		        mindiff = ddiff;
-		        minoffset = offset;
+		        minoffset = -offset;
 		    }
 
 		}
