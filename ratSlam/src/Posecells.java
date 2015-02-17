@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 // Corresponds with MATLAB script called "create_posecell_weights.m" and "rs_get_posecell_xyth.m"
 
 public class Posecells {
@@ -43,18 +41,18 @@ public class Posecells {
 		for (int x = 0; x < dim; x++) {
 			for (int y = 0; y < dim; y++) {
 				for (int z = 0; z < dim; z++) {
-					double b = -1 * (x - dim_center)*(x-dim_center);
-					double c = (y - dim_center) * (y - dim_center);
-					double d = (z - dim_center) * (z - dim_center);
+					double b = -1 * (x + 1 - dim_center)*(x + 1 -dim_center);	// + 1 bc of 0-based indexing
+					double c = (y + 1 - dim_center) * (y + 1 - dim_center);	// same here
+					double d = (z + 1 - dim_center) * (z + 1 - dim_center); // same here
 //					weight[x][y][z] = 1/(var * a * Math.exp((b - c - d) / (2 * (var * var))));
 					// Hanna's edit: above line was original, but I think there was a mistake.
 					// my version below:
-					weight[x][y][z] = 1/(var * a) * Math.exp(b - c - d/(2 * var * var));
+					weight[x][y][z] = 1/(var * a) * Math.exp((b - c - d)/(2 * var * var));
 					total += weight[x][y][z];
 				}
 			}
 		}
-
+		
 		// Divide each weight by the total weight
 		for (int x = 0; x < dim; x++) {
 			for (int y = 0; y < dim; y++) {
