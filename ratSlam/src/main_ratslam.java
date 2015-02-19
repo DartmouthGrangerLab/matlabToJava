@@ -14,8 +14,19 @@
 //    'VTRANS_SCALE', 1, ... % to get the data into delta change in radians between frames
 //    'EXP_LOOPS', 200);
 import javax.swing.GrayFilter;
+import javax.swing.JFrame;
+
+import org.jfree.chart.plot.FastScatterPlot;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RefineryUtilities;
 
 import java.awt.Frame;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
@@ -23,6 +34,7 @@ import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.awt.image.ImageProducer;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class main_ratslam {
 	// My Constants
@@ -45,7 +57,7 @@ public class main_ratslam {
 
 	// Posecell excitation and inhibition 3D weight matrices
 	static Posecells pc = new Posecells(PC_W_E_DIM, PC_W_E_VAR, PC_W_I_DIM, PC_W_I_VAR, 
-			PC_DIM_XY, PC_DIM_TH, x_pc, y_pc, y_pc);
+			PC_DIM_XY, PC_DIM_TH, x_pc, y_pc, th_pc);
 	
 	double[][][] PC_W_EXCITE = pc.pc_w_excite;
 	double[][][] PC_W_INHIB = pc.pc_w_inhib;
@@ -214,9 +226,18 @@ public class main_ratslam {
 		}
 		int frameCount = vs.getFrameCount();
 		END_FRAME = frameCount;
-		Frame frame = new Frame(); 
+		JFrame frame = new JFrame(); 
 		frame.setVisible(true); 
-
+		showOnScreen(0,frame);
+		
+		//Setup to display results
+		Display display = new Display ("RatSlam Output");
+		display.pack();
+		RefineryUtilities.centerFrameOnScreen(display);
+		showOnScreen(0,display);
+		display.setVisible(true);
+		DefaultXYDataset dataset = (DefaultXYDataset) display.dataset;
+		
 		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++) {
 			// save the experience map information to the disk for later playback
 			// read the avi file (in our case, the photo file) and record the delta time
@@ -239,17 +260,54 @@ public class main_ratslam {
 				vo.visual_odometry(img, odos);
 				//XXX: use odoData to track odo data for comparison as per Matlab main
 				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot, pc, vts);
-				//TODO pc.iteration();
-				//TODO rs_get_posecell_xyth()
+//				pci.iteration();
+//				double[] xyth = pc.getPosecellXYTH(pc_xy_sum_sin_lookup, pc_xy_sum_cos_lookup, pc_th_sum_sin_lookup,
+//		                pc_th_sum_cos_lookup, pc_cells_to_avg, pc_avg_xy_wrap, pc_avg_th_wrap);
 //				Exp_Map_Iteration(int vt_id, double vtrans, double vrot, double x_pc, double y_pc, double th_pc, ArrayList <VT> vt)
 				th_pc = 25*Math.random(); // debugging Exp_Map_Iteration before working Posecell code available
+				//TODO: x_pc, etc. are xyth[0-2]
 				Exp_Map_Iteration exp = new Exp_Map_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot,
 						x_pc, y_pc, th_pc, vts , exps);
+				exp.EXP_LOOPS = 200;
+				exp.EXP_CORRECTION = 0.5;
 				exp.iteration();
+				dataset.addSeries("Experience Map", getExpsXY(exps));
 			}
 		}
 	}
 
+	public static void showOnScreen( int screen, JFrame frame ) {
+	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	    GraphicsDevice[] gd = ge.getScreenDevices();
+	    if( screen > -1 && screen < gd.length ) {
+	        frame.setLocation(gd[screen].getDefaultConfiguration().getBounds().x, frame.getY());
+	    } else if( gd.length > 0 ) {
+	        frame.setLocation(gd[0].getDefaultConfiguration().getBounds().x, frame.getY());
+	    } else {
+	        throw new RuntimeException( "No Screens Found" );
+	    }
+	}
+	
+	public static double [][] getExpsXY(ArrayList <Experience> exps) {
+		double [][] retArr = null;
+		ArrayList <Double> xs = new ArrayList<Double>();
+		ArrayList <Double> ys = new ArrayList<Double>();
+
+		for (Experience exp : exps){
+			xs.add(exp.x_m);
+			ys.add(exp.y_m);
+		}
+		
+		retArr = new double [2][exps.size()];
+		for (int x=0; x<xs.size(); x++){
+			retArr [0][x] = (double) xs.get(x);
+		}
+		for (int y=0; y<ys.size(); y++){
+			retArr [1][y] = (double) ys.get(y);
+		}
+		return retArr;
+	}
+	
 	public static void drawFrame(Frame frame, BufferedImage image,  Image grayImg, int index) { 
 		if (image!=null) { 
 			frame.setSize(image.getWidth(), image.getWidth()); 

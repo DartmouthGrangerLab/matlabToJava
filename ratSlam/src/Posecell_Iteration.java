@@ -42,7 +42,7 @@ public class Posecell_Iteration
 	Posecells pc;
 	ArrayList <VT> vts;
 
-	public Posecell_Iteration(int vtId, double trans, double rot, Posecells p, ArrayList vts)
+	public Posecell_Iteration(int vtId, double trans, double rot, Posecells p, ArrayList <VT> vts)
 	{
 		vt_id = vtId;
 		vtrans = trans;
@@ -59,9 +59,9 @@ public class Posecell_Iteration
 		// if this isn't a new vt, then add the energy at its associated posecell location
 		if (vts.get(vt_id).first != 1)
 		{
-			act_x = Math.min(Math.max(Math.round(vts.get(vt_id).x_pc), 1), PC_DIM_XY);
-			act_y = Math.min(Math.max(Math.round(vts.get(vt_id).y_pc), 1), PC_DIM_XY);
-			act_th = Math.min(Math.max(Math.round(vts.get(vt_id).th_pc), 1), PC_DIM_TH);
+			act_x = (int) Math.min(Math.max(Math.round(vts.get(vt_id).x_pc), 1), PC_DIM_XY);
+			act_y = (int) Math.min(Math.max(Math.round(vts.get(vt_id).y_pc), 1), PC_DIM_XY);
+			act_th = (int) Math.min(Math.max(Math.round(vts.get(vt_id).th_pc), 1), PC_DIM_TH);
 
 			// This decays the amount of energy that's injected at the vt's posecell location
 			// This is important as the Posecells poseCells will erroneously snap

@@ -31,7 +31,8 @@ public class Exp_Map_Iteration
 
 	// figure out where the initial value is
 	static int EXP_DELTA_PC_THRESHOLD = 0;
-	static int EXP_CORRECTION, EXP_LOOPS;
+	static int EXP_LOOPS;
+	static double EXP_CORRECTION;
 
 
 	public Exp_Map_Iteration(int vt_id, double vtrans, double vrot, double x_pc, double y_pc, double th_pc, ArrayList <VT> vt, ArrayList <Experience> exps)
