@@ -10,7 +10,7 @@ import org.ejml.simple.SimpleMatrix;
 // This class creates the visual template, taking the image 
 // and breaking it down into a two-dimensional array
 
-public class Visual_Template {
+public class VisualTemplate {
 	int IMAGE_Y_SIZE;		
 	int IMAGE_X_SIZE;		
 
@@ -33,7 +33,7 @@ public class Visual_Template {
 	Experience [] exps = new Experience [5];
 	ArrayList <VT> vts = new ArrayList <VT> ();
 
-	public Visual_Template(BufferedImage img, double x, double y, double th, int vidWidth, int vidHeight, ArrayList <VT> vt) {
+	public VisualTemplate(BufferedImage img, double x, double y, double th, int vidWidth, int vidHeight, ArrayList <VT> vt) {
 		x_val = 0;
 		y_val = 0;
 		th_val = 0;

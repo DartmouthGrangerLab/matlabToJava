@@ -3,40 +3,45 @@ import java.util.Collections;
 import java.util.Vector;
 
 // From rs_experience_map_iteration.m
-public class Exp_Map_Iteration 
-{
+public class ExpMapIteration {
 	// Variables Passed to Class
 	int vt_id, prev_vt_id; 
 	double vtrans, vrot, x_pc, y_pc, th_pc;
 	ArrayList <VT> vt;
 	boolean link_exists;
-	//Experience exps = new Experience();
-	// VT exps = new VT()
 
 	// Constants
 	static final double PI = Math.PI;
-
+	static int PC_DIM_XY = 61;
+	static int PC_DIM_TH = 36;
+	
 	// Variables
 	double delta_pc;
 	Vector <Double> delta_pc_vec = new Vector <Double> ();
 	Vector <Double> search = new Vector <Double> ();
 	int newExpId, prevExpId, prev_exp_id, curr_exp_id;
 	ArrayList <Experience> exps;
-//	int numExps;
+
 	int matched_exp_id, matched_exp_count;
 	int[] exp_history = {};
 
-	static int PC_DIM_XY = 61;
-	static int PC_DIM_TH = 36;
-
+	//some persistent variables
+	double accum_delta_x = 0;
+	double accum_delta_y = 0;
+	double accum_delta_facing = PI/2;
+	
 	// figure out where the initial value is
 	static int EXP_DELTA_PC_THRESHOLD = 0;
 	static int EXP_LOOPS;
 	static double EXP_CORRECTION;
 
+	public ExpMapIteration() {
 
-	public Exp_Map_Iteration(int vt_id, double vtrans, double vrot, double x_pc, double y_pc, double th_pc, ArrayList <VT> vt, ArrayList <Experience> exps)
-	{
+	}
+
+	public void iterate(int vt_id, double vtrans, double vrot, double x_pc, double y_pc, double th_pc,
+			ArrayList <VT> vt,ArrayList <Experience> exps) {
+		
 		this.vt_id = vt_id;
 		this.vtrans = vtrans;
 		this.vrot = vrot;
@@ -45,24 +50,24 @@ public class Exp_Map_Iteration
 		this.th_pc = th_pc;
 		this.vt = vt;
 		this.exps = exps;
-	}
-
-	public void iteration() {
+		
 		int currExpId = exps.size()-1;
 
 		Experience expCurrExpId = exps.get(currExpId);
 		Experience expPrevExpId = null;
 		
 		if (exps.size() >1) {
-			expCurrExpId.accum_delta_facing = clip_rad_180(exps.get(currExpId-1).accum_delta_facing + vrot);
-			expCurrExpId.accum_delta_x = exps.get(currExpId-1).accum_delta_x + vtrans * Math.cos(exps.get(currExpId-1).accum_delta_facing);
-			expCurrExpId.accum_delta_y = exps.get(currExpId-1).accum_delta_y + vtrans * Math.sin(exps.get(currExpId-1).accum_delta_facing);
+			accum_delta_facing = clip_rad_180(accum_delta_facing + vrot);
+			accum_delta_x = accum_delta_x + vtrans * 
+					Math.cos(accum_delta_facing);
+			accum_delta_y = accum_delta_y + vtrans * 
+					Math.sin(accum_delta_facing);
 
 		} else {
-			expCurrExpId.accum_delta_facing = clip_rad_180(
-					expCurrExpId.accum_delta_facing + vrot); // assumes very first exps has stored initializer constants, PI/2 in this case.
-			expCurrExpId.accum_delta_x = expCurrExpId.accum_delta_x + vtrans * Math.cos(expCurrExpId.accum_delta_facing);
-			expCurrExpId.accum_delta_y = expCurrExpId.accum_delta_y + vtrans * Math.sin(expCurrExpId.accum_delta_facing);
+			accum_delta_facing = clip_rad_180(
+					accum_delta_facing + vrot); // assumes very first exps has stored initializer constants, PI/2 in this case.
+			accum_delta_x = accum_delta_x + vtrans * Math.cos(accum_delta_facing);
+			accum_delta_y = accum_delta_y + vtrans * Math.sin(accum_delta_facing);
 		}
 		
 		delta_pc = Math.sqrt(Math.pow(get_min_delta(expCurrExpId.x_pc, x_pc, PC_DIM_XY),2) + 
@@ -79,9 +84,9 @@ public class Exp_Map_Iteration
 			expCurrExpId = exps.get(currExpId);
 			expPrevExpId = exps.get(prevExpId);
 			
-			expPrevExpId.accum_delta_x = 0;
-			expPrevExpId.accum_delta_y = 0;
-			expPrevExpId.accum_delta_facing = exps.get(currExpId).facing_rad;
+			accum_delta_x = 0;
+			accum_delta_y = 0;
+			accum_delta_facing = exps.get(currExpId).facing_rad;
 		} else if (prev_vt_id != vt_id) {
 			matched_exp_count = 0;
 			matched_exp_id = 0;
@@ -124,13 +129,12 @@ public class Exp_Map_Iteration
 						expCurrExpId.numlinks++;
 						expCurrExpId.links.get(expCurrExpId.numlinks).exp_id = matched_exp_id;
 						expCurrExpId.links.get(expCurrExpId.numlinks).d = 
-								Math.sqrt(Math.pow(expCurrExpId.accum_delta_x, 2) + Math.pow(expCurrExpId.accum_delta_y, 2));
+								Math.sqrt(Math.pow(accum_delta_x, 2) + Math.pow(accum_delta_y, 2));
 						expCurrExpId.links.get(expCurrExpId.numlinks).heading_rad = 
 								get_signed_delta_rad(expCurrExpId.facing_rad, 
-										Math.atan2(expCurrExpId.accum_delta_y, expCurrExpId.accum_delta_x));
+										Math.atan2(accum_delta_y, accum_delta_x));
 						expCurrExpId.links.get(expCurrExpId.numlinks).facing_rad = 
-								get_signed_delta_rad(expCurrExpId.facing_rad, 
-										expCurrExpId.accum_delta_facing);
+								get_signed_delta_rad(expCurrExpId.facing_rad, accum_delta_facing);
 					}
 				}
 
@@ -147,9 +151,9 @@ public class Exp_Map_Iteration
 
 				expCurrExpId = exps.get(currExpId);
 				
-				expPrevExpId.accum_delta_x = 0;
-				expPrevExpId.accum_delta_y = 0;
-				expPrevExpId.accum_delta_facing = exps.get(curr_exp_id).facing_rad;
+				accum_delta_x = 0;
+				accum_delta_y = 0;
+				accum_delta_facing = exps.get(curr_exp_id).facing_rad;
 			}
 		}
 		for (int i = 0; i < EXP_LOOPS; i++) {
@@ -170,16 +174,7 @@ public class Exp_Map_Iteration
 					exps.get(e1).x_m = exps.get(e1).x_m - (exps.get(e1).x_m - lx) * EXP_CORRECTION;
 					exps.get(e1).y_m = exps.get(e1).y_m - (exps.get(e1).y_m - ly) * EXP_CORRECTION;
 
-//					if (exp_id == (exps.size()-2)) {
 //						System.out.println("debug: e0: "+ e0);
-//						System.out.println("debug: exps.get(e0).facing_rad: " + exps.get(e0).facing_rad);
-//						System.out.println("debug: exps.get(e0).links.get(link_id).heading_rad: " + exps.get(e0).links.get(link_id).heading_rad);
-//						System.out.println("debug:  cos of above: " + Math.cos(exps.get(e0).facing_rad + exps.get(e0).links.get(link_id).heading_rad));
-//	//					exps.get(e0).links.get(link_id).d: " + exps.get(e0).links.get(link_id).d);
-//	//					System.out.println("debug: exps.get(e0).x_m: " + exps.get(e0).x_m);
-//	//					System.out.println("debug: exps.get(e1).x_m: " + exps.get(e1).x_m);
-//	//					System.out.println("debug: e0: " + e0 + " e1: " + e1);
-//					}
 					
 					double df = get_signed_delta_rad((exps.get(e0).facing_rad + 
 							exps.get(e0).links.get(link_id).facing_rad), exps.get(e1).facing_rad);
@@ -212,29 +207,13 @@ public class Exp_Map_Iteration
 		currExpIdLinkIdx = expCurrExpId.numlinks-1;
 		Link currExpIdLink = expCurrExpId.links.get(currExpIdLinkIdx);
 
-		System.out.println("debug: curr_exp_id: "+ curr_exp_id);
-		System.out.println("debug:      accum_delta_y: "+ expCurrExpId.accum_delta_y);
-		System.out.println("debug:      accum_delta_x: "+ expCurrExpId.accum_delta_x);
-		System.out.println("debug:      atan2: "+ Math.atan2(expCurrExpId.accum_delta_y, expCurrExpId.accum_delta_x));
-		System.out.println("debug:      Get_Signed_Delta_Rad: "+ get_signed_delta_rad(expCurrExpId.facing_rad, Math.atan2(expCurrExpId.accum_delta_y, expCurrExpId.accum_delta_x)));
-		
 		currExpIdLink.exp_id = new_exp_id;
-		currExpIdLink.d = Math.sqrt( Math.pow(expCurrExpId.accum_delta_x,2) + Math.pow(expCurrExpId.accum_delta_y,2));
-		currExpIdLink.heading_rad = get_signed_delta_rad(expCurrExpId.facing_rad, Math.atan2(expCurrExpId.accum_delta_y, expCurrExpId.accum_delta_x));
-		currExpIdLink.facing_rad = get_signed_delta_rad(expCurrExpId.facing_rad, expCurrExpId.accum_delta_facing);
+		currExpIdLink.d = Math.sqrt( Math.pow(accum_delta_x,2) + Math.pow(accum_delta_y,2));
+		currExpIdLink.heading_rad = get_signed_delta_rad(expCurrExpId.facing_rad, Math.atan2(accum_delta_y, accum_delta_x));
+		currExpIdLink.facing_rad = get_signed_delta_rad(expCurrExpId.facing_rad, accum_delta_facing);
 
-		exps.add(new Experience(currExpIdLinkIdx+1, x_pc, y_pc, th_pc, (expCurrExpId.x_m + expCurrExpId.accum_delta_x),
-				(expCurrExpId.y_m + expCurrExpId.accum_delta_y), clip_rad_180(expCurrExpId.accum_delta_facing), vt_id, 0, new ArrayList <Link> ()));
-
-		//		expNewExpId.x_pc = x_pc;
-		//		expNewExpId.y_pc = y_pc;
-		//		expNewExpId.th_pc = th_pc;
-		//		expNewExpId.vt_id = vt_id;
-		//		expNewExpId.x_m = expCurrExpId.x_m + accum_delta_x;
-		//		expNewExpId.y_m = expCurrExpId.y_m + accum_delta_y;
-		//		expNewExpId.facing_rad = clip_rad_180(accum_delta_facing);
-		//		expNewExpId.numlinks = 0;
-		//		expNewExpId.links = new ArrayList <Link> ();
+		exps.add(new Experience(currExpIdLinkIdx+1, x_pc, y_pc, th_pc, (expCurrExpId.x_m + accum_delta_x),
+				(expCurrExpId.y_m + accum_delta_y), clip_rad_180(accum_delta_facing), vt_id, 0, new ArrayList <Link> ()));
 
 		// add this experience id to the vt for efficient lookup
 		//XXX put this functionality back, maybe - BBT

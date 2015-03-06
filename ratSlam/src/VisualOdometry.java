@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.simple.SimpleMatrix;
 
-public class Visual_Odometry 
+public class VisualOdometry 
 {
 	static final double PI = Math.PI;
 

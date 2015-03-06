@@ -36,7 +36,7 @@ import java.awt.image.ImageProducer;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class main_ratslam {
+public class Ratslam {
 	// My Constants
 	static final double PI = Math.PI;
 
@@ -257,6 +257,10 @@ public class main_ratslam {
 		display.setVisible(true);
 		DefaultXYDataset dataset = (DefaultXYDataset) display.dataset;
 		
+		ExpMapIteration expItr = new ExpMapIteration();
+		ExpMapIteration.EXP_LOOPS = 100;
+		ExpMapIteration.EXP_CORRECTION = 0.5;
+		
 		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++) {
 			// save the experience map information to the disk for later playback
 			// read the avi file (in our case, the photo file) and record the delta time
@@ -274,9 +278,9 @@ public class main_ratslam {
 				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  	
 				drawFrame(frame,img, img,frameIdx);
 				System.out.println("debug: frame: "+ frameIdx);
-				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, img.getWidth(), img.getHeight(), vts);
+				VisualTemplate viewTemplate = new VisualTemplate(img, x_pc, y_pc, th_pc, img.getWidth(), img.getHeight(), vts);
 				viewTemplate.visual_template();
-				Visual_Odometry vo = new Visual_Odometry ();
+				VisualOdometry vo = new VisualOdometry ();
 				vo.visual_odometry(img, odos);
 				//XXX: use odoData to track odo data for comparison as per Matlab main
 				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot, pc, vts, PC_E_XY_WRAP, PC_E_TH_WRAP, PC_I_XY_WRAP, PC_I_TH_WRAP);
@@ -290,11 +294,9 @@ public class main_ratslam {
 				y_pc = xyth[1];
 				th_pc = xyth[2];
 
-				Exp_Map_Iteration exp = new Exp_Map_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot,
+				expItr.iterate(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot,
 						x_pc, y_pc, th_pc, vts , exps);
-				exp.EXP_LOOPS = 100;
-				exp.EXP_CORRECTION = 0.5;
-				exp.iteration();
+
 				dataset.addSeries("Experience Map", getExpsXY(exps));
 			}
 		}
