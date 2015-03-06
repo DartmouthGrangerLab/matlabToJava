@@ -22,7 +22,7 @@ public class Exp_Map_Iteration
 	Vector <Double> search = new Vector <Double> ();
 	int newExpId, prevExpId, prev_exp_id, curr_exp_id;
 	ArrayList <Experience> exps;
-	int numExps;
+//	int numExps;
 	int matched_exp_id, matched_exp_count;
 	int[] exp_history = {};
 
@@ -49,10 +49,12 @@ public class Exp_Map_Iteration
 
 	public void iteration() {
 		int currExpId = exps.size()-1;
+
 		Experience expCurrExpId = exps.get(currExpId);
+		Experience expPrevExpId = null;
+		
 		if (exps.size() >1) {
-			expCurrExpId.accum_delta_facing = clip_rad_180(
-					exps.get(currExpId-1).accum_delta_facing + vrot);
+			expCurrExpId.accum_delta_facing = clip_rad_180(exps.get(currExpId-1).accum_delta_facing + vrot);
 			expCurrExpId.accum_delta_x = exps.get(currExpId-1).accum_delta_x + vtrans * Math.cos(exps.get(currExpId-1).accum_delta_facing);
 			expCurrExpId.accum_delta_y = exps.get(currExpId-1).accum_delta_y + vtrans * Math.sin(exps.get(currExpId-1).accum_delta_facing);
 
@@ -69,17 +71,17 @@ public class Exp_Map_Iteration
 		// if the vt is new or the pc x,y,th has changed enough, create a new experience
 		prev_vt_id = vt.get(vt.size()-2).id; // see if this works replacing functionality of global in MATLAB
 		if (vt.get(vt.size()-1).numexps == 0 || delta_pc > EXP_DELTA_PC_THRESHOLD) {
-			numExps++;
-			create_new_exp(currExpId, numExps);
+			create_new_exp(currExpId, exps.size());
 
 			prevExpId = currExpId;
-			currExpId = numExps;
+			currExpId = exps.size()-1;
 
 			expCurrExpId = exps.get(currExpId);
+			expPrevExpId = exps.get(prevExpId);
 			
-			expCurrExpId.accum_delta_x = 0;
-			expCurrExpId.accum_delta_y = 0;
-			expCurrExpId.accum_delta_facing = exps.get(currExpId).facing_rad;
+			expPrevExpId.accum_delta_x = 0;
+			expPrevExpId.accum_delta_y = 0;
+			expPrevExpId.accum_delta_facing = exps.get(currExpId).facing_rad;
 		} else if (prev_vt_id != vt_id) {
 			matched_exp_count = 0;
 			matched_exp_id = 0;
@@ -135,9 +137,9 @@ public class Exp_Map_Iteration
 				// if there wasn't an experience with the current vt and the posecell x y th
 				// then create a new experience
 				if (matched_exp_id == 0) {
-					numExps++;
-					create_new_exp(currExpId, numExps);
-					matched_exp_id = numExps;
+//					numExps++;
+					create_new_exp(currExpId, exps.size());
+					matched_exp_id = exps.size();
 				}
 
 				prev_exp_id = currExpId;
@@ -145,29 +147,40 @@ public class Exp_Map_Iteration
 
 				expCurrExpId = exps.get(currExpId);
 				
-				expCurrExpId.accum_delta_x = 0;
-				expCurrExpId.accum_delta_y = 0;
-				expCurrExpId.accum_delta_facing = exps.get(curr_exp_id).facing_rad;
+				expPrevExpId.accum_delta_x = 0;
+				expPrevExpId.accum_delta_y = 0;
+				expPrevExpId.accum_delta_facing = exps.get(curr_exp_id).facing_rad;
 			}
 		}
 		for (int i = 0; i < EXP_LOOPS; i++) {
-			for(int exp_id = 0; exp_id < numExps; exp_id++) {
+			for(int exp_id = 0; exp_id < exps.size(); exp_id++) {
 				for (int link_id = 0; link_id < exps.get(exp_id).numlinks; link_id++) {
 					int e0 = exp_id;
 					int e1 = exps.get(exp_id).links.get(link_id).exp_id;
 
 					double lx = exps.get(e0).x_m + exps.get(e0).links.get(link_id).d * 
-							Math.cos(exps.get(e0).facing_rad) + 
-							exps.get(e0).links.get(link_id).heading_rad;
+							Math.cos(exps.get(e0).facing_rad + 
+							exps.get(e0).links.get(link_id).heading_rad);
 					double ly = exps.get(e0).y_m + exps.get(e0).links.get(link_id).d * 
-							Math.sin(exps.get(e0).facing_rad) + 
-							exps.get(e0).links.get(link_id).heading_rad;
+							Math.sin(exps.get(e0).facing_rad + 
+							exps.get(e0).links.get(link_id).heading_rad);
 
 					exps.get(e0).x_m = exps.get(e0).x_m + (exps.get(e1).x_m - lx) * EXP_CORRECTION;
 					exps.get(e0).y_m = exps.get(e0).y_m + (exps.get(e1).y_m - ly) * EXP_CORRECTION;
-					exps.get(e1).x_m = exps.get(e1).x_m + (exps.get(e1).x_m - lx) * EXP_CORRECTION;
-					exps.get(e1).y_m = exps.get(e1).y_m + (exps.get(e1).y_m - ly) * EXP_CORRECTION;
+					exps.get(e1).x_m = exps.get(e1).x_m - (exps.get(e1).x_m - lx) * EXP_CORRECTION;
+					exps.get(e1).y_m = exps.get(e1).y_m - (exps.get(e1).y_m - ly) * EXP_CORRECTION;
 
+//					if (exp_id == (exps.size()-2)) {
+//						System.out.println("debug: e0: "+ e0);
+//						System.out.println("debug: exps.get(e0).facing_rad: " + exps.get(e0).facing_rad);
+//						System.out.println("debug: exps.get(e0).links.get(link_id).heading_rad: " + exps.get(e0).links.get(link_id).heading_rad);
+//						System.out.println("debug:  cos of above: " + Math.cos(exps.get(e0).facing_rad + exps.get(e0).links.get(link_id).heading_rad));
+//	//					exps.get(e0).links.get(link_id).d: " + exps.get(e0).links.get(link_id).d);
+//	//					System.out.println("debug: exps.get(e0).x_m: " + exps.get(e0).x_m);
+//	//					System.out.println("debug: exps.get(e1).x_m: " + exps.get(e1).x_m);
+//	//					System.out.println("debug: e0: " + e0 + " e1: " + e1);
+//					}
+					
 					double df = get_signed_delta_rad((exps.get(e0).facing_rad + 
 							exps.get(e0).links.get(link_id).facing_rad), exps.get(e1).facing_rad);
 
@@ -199,8 +212,14 @@ public class Exp_Map_Iteration
 		currExpIdLinkIdx = expCurrExpId.numlinks-1;
 		Link currExpIdLink = expCurrExpId.links.get(currExpIdLinkIdx);
 
+		System.out.println("debug: curr_exp_id: "+ curr_exp_id);
+		System.out.println("debug:      accum_delta_y: "+ expCurrExpId.accum_delta_y);
+		System.out.println("debug:      accum_delta_x: "+ expCurrExpId.accum_delta_x);
+		System.out.println("debug:      atan2: "+ Math.atan2(expCurrExpId.accum_delta_y, expCurrExpId.accum_delta_x));
+		System.out.println("debug:      Get_Signed_Delta_Rad: "+ get_signed_delta_rad(expCurrExpId.facing_rad, Math.atan2(expCurrExpId.accum_delta_y, expCurrExpId.accum_delta_x)));
+		
 		currExpIdLink.exp_id = new_exp_id;
-		currExpIdLink.d = Math.sqrt(expCurrExpId.accum_delta_x * expCurrExpId.accum_delta_x + (expCurrExpId.accum_delta_y * expCurrExpId.accum_delta_y));
+		currExpIdLink.d = Math.sqrt( Math.pow(expCurrExpId.accum_delta_x,2) + Math.pow(expCurrExpId.accum_delta_y,2));
 		currExpIdLink.heading_rad = get_signed_delta_rad(expCurrExpId.facing_rad, Math.atan2(expCurrExpId.accum_delta_y, expCurrExpId.accum_delta_x));
 		currExpIdLink.facing_rad = get_signed_delta_rad(expCurrExpId.facing_rad, expCurrExpId.accum_delta_facing);
 

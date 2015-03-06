@@ -64,28 +64,44 @@ public class main_ratslam {
 	double[][][] Posecells = pc.posecells;
 	
 	// Convenience constants
-	double PC_W_E_DIM_HALF = Math.floor(PC_W_E_DIM / 2);
-	double PC_W_I_DIM_HALF = Math.floor(PC_W_I_DIM / 2);
-	double PC_C_SIZE_TH = (2 * PI) / PC_DIM_TH;
-
+	Double PC_W_E_DIM_HALF = Math.floor(PC_W_E_DIM / 2);
+	Double PC_W_I_DIM_HALF = Math.floor(PC_W_I_DIM / 2);
+	Double PC_C_SIZE_TH = (2 * PI) / PC_DIM_TH;
+	
+	
 	// Lookups to wrap the pose cell excitation/inhibition weight steps
-	double PC_E_XY_WRAP;	// = [(PC_DIM_XY - PC_W_E_DIM_HALF + 1):PC_DIM_XY 1:PC_DIM_XY 1:PC_W_E_DIM_HALF];
-	double PC_E_TH_WRAP;	// = [(PC_DIM_TH - PC_W_E_DIM_HALF + 1):PC_DIM_TH 1:PC_DIM_TH 1:PC_W_E_DIM_HALF];
-	double PC_I_XY_WRAP;	// = [(PC_DIM_XY - PC_W_I_DIM_HALF + 1):PC_DIM_XY 1:PC_DIM_XY 1:PC_W_I_DIM_HALF];
-	double PC_I_TH_WRAP;	// = [(PC_DIM_TH - PC_W_I_DIM_HALF + 1):PC_DIM_TH 1:PC_DIM_TH 1:PC_W_I_DIM_HALF];
+
+//	int [] PC_E_XY_WRAP = Util.setRange((PC_DIM_XY - PC_W_E_DIM_HALF.intValue() + 1), PC_W_E_DIM_HALF.intValue());//[(PC_DIM_XY - PC_W_E_DIM_HALF + 1):PC_DIM_XY 1:PC_DIM_XY 1:PC_W_E_DIM_HALF];
+	static int [] PC_E_XY_WRAP = {59,60,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,
+			40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,0,1,2,3};
+	
+//	double PC_E_TH_WRAP;	// = [(PC_DIM_TH - PC_W_E_DIM_HALF + 1):PC_DIM_TH 1:PC_DIM_TH 1:PC_W_E_DIM_HALF];
+	
+	static int [] PC_E_TH_WRAP = {34,35,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,0,1,2,3};
+	
+//	double PC_I_XY_WRAP;	// = [(PC_DIM_XY - PC_W_I_DIM_HALF + 1):PC_DIM_XY 1:PC_DIM_XY 1:PC_W_I_DIM_HALF];
+	
+	static int [] PC_I_XY_WRAP ={60,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,0,1,2};
+	
+//	double PC_I_TH_WRAP;	// = [(PC_DIM_TH - PC_W_I_DIM_HALF + 1):PC_DIM_TH 1:PC_DIM_TH 1:PC_W_I_DIM_HALF];
+	static int [] PC_I_TH_WRAP ={35,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,0,1,2};
 	// CONTINUE LATER
 
 	// Lookups for finding the center of the posecell Posecells by rs_get_posecell_xyth()
-	// HK EDIT START
-	double PC_XY_SUM_SIN_LOOKUP;	// = sin((1:PC_DIM_XY).*2*pi/PC_DIM_XY);
-	double PC_XY_SUM_COS_LOOKUP;	// = cos((1:PC_DIM_XY).*2*pi/PC_DIM_XY);
-	double PC_TH_SUM_SIN_LOOKUP;	// = sin((1:PC_DIM_TH).*2*pi/PC_DIM_TH);
-	double PC_TH_SUM_COS_LOOKUP;	// = cos((1:PC_DIM_TH).*2*pi/PC_DIM_TH);
-	double PC_CELLS_TO_AVG = 3;
-	double PC_AVG_XY_WRAP ;		// = [(PC_DIM_XY - PC_CELLS_TO_AVG + 1):PC_DIM_XY 1:PC_DIM_XY 1:PC_CELLS_TO_AVG];
-	double PC_AVG_TH_WRAP;		// = [(PC_DIM_TH - PC_CELLS_TO_AVG + 1):PC_DIM_TH 1:PC_DIM_TH 1:PC_CELLS_TO_AVG];
-	// HK EDIT END
-	// CONTINUE LATER
+	// = sin((1:PC_DIM_XY).*2*pi/PC_DIM_XY)
+	static final double [] PC_XY_SUM_SIN_LOOKUP = {0.102820997137360,0.204552066126201,0.304114832327518,0.400453905651266,0.492548067953864,0.579421098204564,0.660152120671232,0.733885366432199,0.799839244739719,0.857314628076332,0.905702263080471,0.944489228783661,0.973264373700383,0.991722674136102,0.999668467514313,0.997017526448527,0.983797951573516,0.960149873671602,0.926323968251495,0.882678798325547,0.829677013552619,0.767880446036600,0.697944154766344,0.620609481827423,0.536696193991601,0.447093792985114,0.352752086549095,0.254671120241229,0.153890576704062,0.0514787547703467,-0.0514787547703465,-0.153890576704061,-0.254671120241229,-0.352752086549095,-0.447093792985114,-0.536696193991600,-0.620609481827423,-0.697944154766343,-0.767880446036600,-0.829677013552619,-0.882678798325547,-0.926323968251495,-0.960149873671602,-0.983797951573516,-0.997017526448527,-0.999668467514313,-0.991722674136102,-0.973264373700383,-0.944489228783661,-0.905702263080472,-0.857314628076332,-0.799839244739719,-0.733885366432199,-0.660152120671232,-0.579421098204564,-0.492548067953865,-0.400453905651267,-0.304114832327518,-0.204552066126201,-0.102820997137361,-2.44929359829471e-16};
+	// = cos((1:PC_DIM_XY).*2*pi/PC_DIM_XY)
+	static final double [] PC_XY_SUM_COS_LOOKUP = {0.994699875614589,0.978855685095358,0.952635380803383,0.916316904487005,0.870285241030155,0.815028337516811,0.751131930870520,0.679273338897293,0.600214280548368,0.514792801509831,0.423914390709861,0.328542381910835,0.229687742131796,0.128398355146551,0.0257479136549887,-0.0771754621266462,-0.179280758810736,-0.279485634851609,-0.376727893635185,-0.469976743027320,-0.558243722026865,-0.640593178698175,-0.716152188314393,-0.784119806576710,-0.843775559823186,-0.894487082228796,-0.935716819040494,-0.967027724791320,-0.988087896091077,-0.998674089884831,-0.998674089884831,-0.988087896091077,-0.967027724791320,-0.935716819040494,-0.894487082228796,-0.843775559823186,-0.784119806576710,-0.716152188314394,-0.640593178698175,-0.558243722026865,-0.469976743027321,-0.376727893635185,-0.279485634851610,-0.179280758810736,-0.0771754621266464,0.0257479136549877,0.128398355146551,0.229687742131795,0.328542381910834,0.423914390709861,0.514792801509831,0.600214280548368,0.679273338897293,0.751131930870520,0.815028337516811,0.870285241030155,0.916316904487004,0.952635380803383,0.978855685095358,0.994699875614589,1};
+	// = sin((1:PC_DIM_TH).*2*pi/PC_DIM_TH);
+	static final double [] PC_TH_SUM_SIN_LOOKUP = {0.173648177666930,0.342020143325669,0.500000000000000,0.642787609686539,0.766044443118978,0.866025403784439,0.939692620785908,0.984807753012208,1,0.984807753012208,0.939692620785908,0.866025403784439,0.766044443118978,0.642787609686540,0.500000000000000,0.342020143325669,0.173648177666930,1.22464679914735e-16,-0.173648177666930,-0.342020143325669,-0.500000000000000,-0.642787609686539,-0.766044443118978,-0.866025403784439,-0.939692620785908,-0.984807753012208,-1,-0.984807753012208,-0.939692620785908,-0.866025403784439,-0.766044443118978,-0.642787609686540,-0.500000000000000,-0.342020143325669,-0.173648177666930,-2.44929359829471e-16};
+	// = cos((1:PC_DIM_TH).*2*pi/PC_DIM_TH);
+	static final double [] PC_TH_SUM_COS_LOOKUP = {0.984807753012208,0.939692620785908,0.866025403784439,0.766044443118978,0.642787609686539,0.500000000000000,0.342020143325669,0.173648177666930,6.12323399573677e-17,-0.173648177666930,-0.342020143325669,-0.500000000000000,-0.642787609686539,-0.766044443118978,-0.866025403784439,-0.939692620785908,-0.984807753012208,-1,-0.984807753012208,-0.939692620785908,-0.866025403784439,-0.766044443118978,-0.642787609686540,-0.500000000000000,-0.342020143325669,-0.173648177666930,-1.83697019872103e-16,0.173648177666930,0.342020143325669,0.499999999999999,0.642787609686539,0.766044443118978,0.866025403784439,0.939692620785908,0.984807753012208,1};
+	static final int PC_CELLS_TO_AVG = 3;
+	// = [(PC_DIM_XY - PC_CELLS_TO_AVG + 1):PC_DIM_XY 1:PC_DIM_XY 1:PC_CELLS_TO_AVG];
+	static final double [] PC_AVG_XY_WRAP = {59,60,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,0,1,2,3};
+	// = [(PC_DIM_TH - PC_CELLS_TO_AVG + 1):PC_DIM_TH 1:PC_DIM_TH 1:PC_CELLS_TO_AVG];
+	static final double [] PC_AVG_TH_WRAP = {34,35,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,0,1,2,3};
+
 
 	// Specify the movie and the frames to read
 	static int START_FRAME = 1;
@@ -109,6 +125,7 @@ public class main_ratslam {
 	static int POSECELL_VTRANS_SCALING = 100;
 
 	int[] time_delta_s;
+	static double[] xyth;
 	// start stopwatch here
 
 	static String MOV_FILE = "file:///Users/bentito/Downloads/stlucia_testloop.avi";
@@ -226,15 +243,17 @@ public class main_ratslam {
 		}
 		int frameCount = vs.getFrameCount();
 		END_FRAME = frameCount;
-		JFrame frame = new JFrame(); 
-		frame.setVisible(true); 
-		showOnScreen(0,frame);
+		JFrame frame = new JFrame();
+		frame.setSize(640, 480); 
+		frame.setVisible(true);
+		
+//		showOnScreen(0,frame);
 		
 		//Setup to display results
 		Display display = new Display ("RatSlam Output");
 		display.pack();
 		RefineryUtilities.centerFrameOnScreen(display);
-		showOnScreen(0,display);
+//		showOnScreen(0,display);
 		display.setVisible(true);
 		DefaultXYDataset dataset = (DefaultXYDataset) display.dataset;
 		
@@ -253,22 +272,27 @@ public class main_ratslam {
 				ImageFilter filter = new GrayFilter(true, 0);  
 				ImageProducer producer = new FilteredImageSource(img.getSource(), filter);  
 				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  	
-				drawFrame(frame,img, grayImg,frameIdx);
+				drawFrame(frame,img, img,frameIdx);
+				System.out.println("debug: frame: "+ frameIdx);
 				Visual_Template viewTemplate = new Visual_Template(img, x_pc, y_pc, th_pc, img.getWidth(), img.getHeight(), vts);
 				viewTemplate.visual_template();
 				Visual_Odometry vo = new Visual_Odometry ();
 				vo.visual_odometry(img, odos);
 				//XXX: use odoData to track odo data for comparison as per Matlab main
-				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot, pc, vts);
-//				pci.iteration();
-//				double[] xyth = pc.getPosecellXYTH(pc_xy_sum_sin_lookup, pc_xy_sum_cos_lookup, pc_th_sum_sin_lookup,
-//		                pc_th_sum_cos_lookup, pc_cells_to_avg, pc_avg_xy_wrap, pc_avg_th_wrap);
-//				Exp_Map_Iteration(int vt_id, double vtrans, double vrot, double x_pc, double y_pc, double th_pc, ArrayList <VT> vt)
-				th_pc = 25*Math.random(); // debugging Exp_Map_Iteration before working Posecell code available
-				//TODO: x_pc, etc. are xyth[0-2]
+				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot, pc, vts, PC_E_XY_WRAP, PC_E_TH_WRAP, PC_I_XY_WRAP, PC_I_TH_WRAP);
+				pci.iteration();
+
+				xyth = pc.getPosecellXYTH(PC_XY_SUM_SIN_LOOKUP, PC_XY_SUM_COS_LOOKUP, PC_TH_SUM_SIN_LOOKUP,
+		                PC_TH_SUM_COS_LOOKUP, PC_CELLS_TO_AVG, PC_AVG_XY_WRAP, PC_AVG_TH_WRAP);
+//				System.out.println("debug: odo.vtrans: "+ odos.get(odos.size()-1).vtrans);
+				
+				x_pc = xyth[0];
+				y_pc = xyth[1];
+				th_pc = xyth[2];
+
 				Exp_Map_Iteration exp = new Exp_Map_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot,
 						x_pc, y_pc, th_pc, vts , exps);
-				exp.EXP_LOOPS = 200;
+				exp.EXP_LOOPS = 100;
 				exp.EXP_CORRECTION = 0.5;
 				exp.iteration();
 				dataset.addSeries("Experience Map", getExpsXY(exps));
@@ -297,6 +321,8 @@ public class main_ratslam {
 			xs.add(exp.x_m);
 			ys.add(exp.y_m);
 		}
+//		System.out.println("debug: x_m: "+exps.get(exps.size()-1).x_m);
+//		System.out.println("debug: y_m: "+exps.get(exps.size()-1).y_m);
 		
 		retArr = new double [2][exps.size()];
 		for (int x=0; x<xs.size(); x++){
@@ -308,10 +334,10 @@ public class main_ratslam {
 		return retArr;
 	}
 	
-	public static void drawFrame(Frame frame, BufferedImage image,  Image grayImg, int index) { 
+	public static void drawFrame(Frame frame, BufferedImage image,  Image colorImg, int index) { 
 		if (image!=null) { 
-			frame.setSize(image.getWidth(), image.getWidth()); 
-			frame.getGraphics().drawImage(grayImg, 0, 0, null);
+//			frame.setSize(image.getWidth(), image.getHeight()); 
+			frame.getGraphics().drawImage(colorImg, 0, 0, null);
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
