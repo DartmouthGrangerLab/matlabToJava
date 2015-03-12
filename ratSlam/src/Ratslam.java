@@ -16,12 +16,10 @@
 import javax.swing.GrayFilter;
 import javax.swing.JFrame;
 
-import org.jfree.chart.plot.FastScatterPlot;
-import org.jfree.chart.plot.XYPlot;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.FrameGrabber.Exception;
+
 import org.jfree.data.xy.DefaultXYDataset;
-import org.jfree.data.xy.XYDataset;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.RefineryUtilities;
 
 import java.awt.Frame;
@@ -34,7 +32,6 @@ import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.awt.image.ImageProducer;
 import java.util.ArrayList;
-import java.util.Random;
 
 public class Ratslam {
 	// My Constants
@@ -128,8 +125,10 @@ public class Ratslam {
 	static double[] xyth;
 	static int vtID=0;
 	// start stopwatch here
-
-	static String MOV_FILE = "file:///Users/bentito/Downloads/stlucia_testloop.avi";
+	//FIXME: do this a better way
+//	static String MOV_FILE = "file:///Users/bentito/Downloads/stlucia_testloop.avi";
+//	static String MOV_FILE = "file:///Users/bentito/Downloads/Han1s.mp4";
+	static String MOV_FILE = "file:////Volumes/Media/Video/watch_dogs/watch_dogs_hires_loop_driving.avi";
 	// Main method of ratSLAM, not including constants (which are above, for the most part)
 	public static void main(String[] args) {
 		// Set initial position in the pose network
@@ -150,9 +149,7 @@ public class Ratslam {
 		// Specify movie and frames to read
 		// In our case, specify image size, in x and y direction
 
-
-		VideoSource vs = new VideoSource(MOV_FILE);
-		vs.initialize();
+		FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(MOV_FILE);
 
 		// store size in a variable
 		// 5 used as random size
@@ -235,14 +232,14 @@ public class Ratslam {
 
 
 		int frameIdx = 0;
-		while (vs.getState()==VideoSource.NOT_READY) { 
-			try { Thread.sleep(100); } catch (Exception e) { } 
-		} 
-		if (vs.getState()==VideoSource.ERROR) { 
-			System.out.println("Error while initing"+args[0]); 
-			return; 
+
+		try {
+			grabber.start();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
-		int frameCount = vs.getFrameCount();
+		int frameCount = grabber.getLengthInFrames();
 		END_FRAME = frameCount;
 		JFrame frame = new JFrame();
 		frame.setSize(640, 480); 
@@ -277,7 +274,13 @@ public class Ratslam {
 
 				//}
 			} else {
-				BufferedImage img = vs.getFrame(frameIdx);
+				BufferedImage img = null;
+				try {
+					img = grabber.grab().getBufferedImage();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				ImageFilter filter = new GrayFilter(true, 0);  
 				ImageProducer producer = new FilteredImageSource(img.getSource(), filter);  
 				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  	
