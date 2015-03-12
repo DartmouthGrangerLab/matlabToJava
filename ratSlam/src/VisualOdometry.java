@@ -8,36 +8,12 @@ public class VisualOdometry
 {
 	static final double PI = Math.PI;
 
-	int IMAGE_Y_SIZE = 100;		
-	int IMAGE_X_SIZE = 100;	
-	
 	// Set up the visual odometry
 	double vrot = 0;
 	double vtrans = 0;
-//	int[] IMAGE_ODO_X_RANGE = Util.setRange(IMAGE_X_SIZE);
-//	int[] IMAGE_VTRANS_Y_RANGE = Util.setRange(IMAGE_Y_SIZE);
-//	int[] IMAGE_VROT_Y_RANGE = Util.setRange(IMAGE_Y_SIZE);
+
 	int VTRANS_SCALE = 100;
 	int VISUAL_ODO_SHIFT_MATCH = 140;
-
-	int[] prev_vrot_image_X_sums;
-	int[] prev_vtrans_image_x_sums;
-
-	int accum_delta_x = 0;
-	int accum_delta_y = 0;
-	double accum_delta_facing = PI / 2;
-
-	int numexps = 1;
-	int curr_exp_id = 1;
-	int exp_history = 1;
-	double EXP_CORRECTION = 0.5;
-	double EXP_LOOPS = 100;
-	double EXP_DELTA_PC_THRESHOLD = 1.0;
-
-	int ODO_ROT_SCALING = 1;
-	int ODO_VTRANS_SCALING = 1;
-	int POSECELL_VTRANS_SCALING = 1;
-	int ODO_FILE = 1;
 
 	public void visual_odometry(BufferedImage img, ArrayList <Odo> odos) {
 

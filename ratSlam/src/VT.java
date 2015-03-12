@@ -10,7 +10,7 @@ public class VT
 	double x_pc;
 	double y_pc;
 	double th_pc;
-	ArrayList <Experience> exps;
+	ArrayList <Integer> exps;
 	double [] template;
 	//Experience exps = new Experience();
 	// find out if 'id' is a keyword 
@@ -26,8 +26,6 @@ public class VT
 		th_pc = thPc;
 		first = f;
 		numexps = numE;
-//		exps = exp;
-		// figure out vt[1].exps[1].id = 1;
-		//exps.visTemp[1] = 1;
+		exps = new ArrayList <Integer> (); // this is just a list of exps id's that pair with this VT
 	}
 }

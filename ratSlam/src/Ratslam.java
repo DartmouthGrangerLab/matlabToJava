@@ -51,9 +51,9 @@ public class Ratslam {
 	static int PC_W_I_VAR = 2;
 
 	// Set the initial position in the pose network
-	static int x_pc = (PC_DIM_XY / 2) + 1;
-	static int y_pc = (PC_DIM_XY / 2) + 1;
-	static int th_pc = (PC_DIM_TH / 2) + 1;
+	static int x_pc = Math.floorDiv(PC_DIM_XY, 2);
+	static int y_pc = Math.floorDiv(PC_DIM_XY, 2);
+	static int th_pc = Math.floorDiv(PC_DIM_TH, 2);
 
 	// Posecell excitation and inhibition 3D weight matrices
 	static Posecells pc = new Posecells(PC_W_E_DIM, PC_W_E_VAR, PC_W_I_DIM, PC_W_I_VAR, 
@@ -98,9 +98,9 @@ public class Ratslam {
 	static final double [] PC_TH_SUM_COS_LOOKUP = {0.984807753012208,0.939692620785908,0.866025403784439,0.766044443118978,0.642787609686539,0.500000000000000,0.342020143325669,0.173648177666930,6.12323399573677e-17,-0.173648177666930,-0.342020143325669,-0.500000000000000,-0.642787609686539,-0.766044443118978,-0.866025403784439,-0.939692620785908,-0.984807753012208,-1,-0.984807753012208,-0.939692620785908,-0.866025403784439,-0.766044443118978,-0.642787609686540,-0.500000000000000,-0.342020143325669,-0.173648177666930,-1.83697019872103e-16,0.173648177666930,0.342020143325669,0.499999999999999,0.642787609686539,0.766044443118978,0.866025403784439,0.939692620785908,0.984807753012208,1};
 	static final int PC_CELLS_TO_AVG = 3;
 	// = [(PC_DIM_XY - PC_CELLS_TO_AVG + 1):PC_DIM_XY 1:PC_DIM_XY 1:PC_CELLS_TO_AVG];
-	static final double [] PC_AVG_XY_WRAP = {59,60,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,0,1,2,3};
+	static final int [] PC_AVG_XY_WRAP = {59,60,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,0,1,2,3};
 	// = [(PC_DIM_TH - PC_CELLS_TO_AVG + 1):PC_DIM_TH 1:PC_DIM_TH 1:PC_CELLS_TO_AVG];
-	static final double [] PC_AVG_TH_WRAP = {34,35,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,0,1,2,3};
+	static final int [] PC_AVG_TH_WRAP = {34,35,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,0,1,2,3};
 
 
 	// Specify the movie and the frames to read
@@ -122,10 +122,11 @@ public class Ratslam {
 	static double [] prev_vrot_image_x_sums;
 	static double [] prev_vtrans_image_x_sums;
 
-	static int POSECELL_VTRANS_SCALING = 100;
+	static int POSECELL_VTRANS_SCALING = 1/10; // this is unused in the code -- MATLAB too!
 
 	int[] time_delta_s;
 	static double[] xyth;
+	static int vtID=0;
 	// start stopwatch here
 
 	static String MOV_FILE = "file:///Users/bentito/Downloads/stlucia_testloop.avi";
@@ -172,7 +173,7 @@ public class Ratslam {
 
 //		Experience[] exps = new Experience[5];
 		// figure out where to get id
-		exps.add(new Experience(0, x_pc, y_pc, th_pc, 0, 0, (PI/2), 1, 0, links));
+		exps.add(new Experience(0, x_pc, y_pc, th_pc, 0, 0, (PI/2), 1, links));
 
 		// Process the parameters
 		//  nargin: number of arguments passed to main
@@ -258,8 +259,12 @@ public class Ratslam {
 		DefaultXYDataset dataset = (DefaultXYDataset) display.dataset;
 		
 		ExpMapIteration expItr = new ExpMapIteration();
+		
+		ExpMapIteration.EXP_DELTA_PC_THRESHOLD = 1.0;
 		ExpMapIteration.EXP_LOOPS = 100;
 		ExpMapIteration.EXP_CORRECTION = 0.5;
+		ExpMapIteration.PC_DIM_XY = PC_DIM_XY;
+		ExpMapIteration.PC_DIM_TH = PC_DIM_TH;
 		
 		for (frameIdx = 0; frameIdx < END_FRAME; frameIdx++) {
 			// save the experience map information to the disk for later playback
@@ -277,14 +282,14 @@ public class Ratslam {
 				ImageProducer producer = new FilteredImageSource(img.getSource(), filter);  
 				Image grayImg = Toolkit.getDefaultToolkit().createImage(producer);  	
 				drawFrame(frame,img, img,frameIdx);
-				System.out.println("debug: frame: "+ frameIdx);
+//				System.out.println("debug: frame: "+ frameIdx);
 				VisualTemplate viewTemplate = new VisualTemplate(img, x_pc, y_pc, th_pc, img.getWidth(), img.getHeight(), vts);
-				viewTemplate.visual_template();
+				vtID = viewTemplate.visual_template();
 				VisualOdometry vo = new VisualOdometry ();
 				vo.visual_odometry(img, odos);
 				//XXX: use odoData to track odo data for comparison as per Matlab main
-				Posecell_Iteration pci = new Posecell_Iteration(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot, pc, vts, PC_E_XY_WRAP, PC_E_TH_WRAP, PC_I_XY_WRAP, PC_I_TH_WRAP);
-				pci.iteration();
+				Posecell_Iteration pci = new Posecell_Iteration(vtID, odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot, pc, vts, PC_E_XY_WRAP, PC_E_TH_WRAP, PC_I_XY_WRAP, PC_I_TH_WRAP);
+				pc = pci.iteration();
 
 				xyth = pc.getPosecellXYTH(PC_XY_SUM_SIN_LOOKUP, PC_XY_SUM_COS_LOOKUP, PC_TH_SUM_SIN_LOOKUP,
 		                PC_TH_SUM_COS_LOOKUP, PC_CELLS_TO_AVG, PC_AVG_XY_WRAP, PC_AVG_TH_WRAP);
@@ -294,7 +299,7 @@ public class Ratslam {
 				y_pc = xyth[1];
 				th_pc = xyth[2];
 
-				expItr.iterate(vts.size(), odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot,
+				expItr.iterate(vtID, odos.get(odos.size()-1).vtrans, odos.get(odos.size()-1).vrot,
 						x_pc, y_pc, th_pc, vts , exps);
 
 				dataset.addSeries("Experience Map", getExpsXY(exps));

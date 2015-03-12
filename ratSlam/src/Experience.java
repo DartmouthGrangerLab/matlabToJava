@@ -17,15 +17,16 @@ public class Experience
 	double accum_delta_x = 0;
 	double accum_delta_y = 0;
 	int vt_id;
-	int numlinks;
 	ArrayList <Link> links;
+	int numLinks;
 	int id;
 	public Experience()
 	{
 		
 	}
 	
-	public Experience(int id, double xPc, double yPc, double thPc, double xM, double yM, double facRad, int vtId, int nLinks, ArrayList <Link> l)
+	public Experience(int id, double xPc, double yPc, double thPc, double xM, double yM, double facRad, int vtId, 
+			ArrayList <Link> links)
 	{
 		this.id = id;
 		x_pc = xPc;
@@ -35,7 +36,11 @@ public class Experience
 		y_m = yM;
 		facing_rad = facRad;
 		vt_id = vtId;
-		numlinks = nLinks;
-		links = l;
+		this.links = links;
+		
+	}
+	
+	public int numLinks() {
+		return this.links.size(); 
 	}
 }

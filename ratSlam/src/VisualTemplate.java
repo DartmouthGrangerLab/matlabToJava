@@ -30,10 +30,9 @@ public class VisualTemplate {
 	int[][] raw_image = null;
 	int[] new_vt_history = null;
 	
-	Experience [] exps = new Experience [5];
-	ArrayList <VT> vts = new ArrayList <VT> ();
+	private ArrayList <VT> vts = new ArrayList <VT> ();
 
-	public VisualTemplate(BufferedImage img, double x, double y, double th, int vidWidth, int vidHeight, ArrayList <VT> vt) {
+	public VisualTemplate(BufferedImage img, double x, double y, double th, int vidWidth, int vidHeight, ArrayList <VT> vts) {
 		x_val = 0;
 		y_val = 0;
 		th_val = 0;
@@ -41,7 +40,7 @@ public class VisualTemplate {
 		raw_image = intImg;
 		IMAGE_X_SIZE = vidWidth;
 		IMAGE_Y_SIZE = vidHeight;
-		vts = vt;
+		this.vts = vts;
 		double[][] sub_image = null;
 		
 		IMAGE_VT_Y_RANGE = Util.setRange((IMAGE_Y_SIZE/2 - 80 - 40), (IMAGE_Y_SIZE/2 + 80 - 40)); // 80 and 40 ought to be settable too -bbt
@@ -80,8 +79,7 @@ public class VisualTemplate {
 		subImage = new DenseMatrix64F(sub_image);
 	}
 	
-	public void visual_template()
-	{
+	public int visual_template() {
 		int vt_id = 0;
 
 		// normalized intensity sums
@@ -116,8 +114,8 @@ public class VisualTemplate {
 		//int[] minOffset = new int [numvts];
 		Vector <Double> diff = new Vector <Double> ();
 		numvts = vts.size();
-		for (int k = 0; k < vts.size(); k++)
-		{
+		
+		for (int k = 0; k < vts.size(); k++) {
 			//vt.visTemp
 			vts.get(k).template_decay = vts.get(k).template_decay - VT_GLOBAL_DECAY;
 			if(vts.get(k).template_decay < 0)
@@ -147,12 +145,13 @@ public class VisualTemplate {
 			vt_id = numvts;
 		} else {
 			vt_id = minDiffIdx;
-			vts.get(vt_id).template_decay = VT_ACTIVE_DECAY;
+			vts.get(vt_id).template_decay += VT_ACTIVE_DECAY;
 			if (vts.get(vts.size()-2).id != vt_id) { // was a comparison (prev_vt_id != vt_id) in MATLAB version
 				vts.get(vt_id).first = 0;
 			}
 		}
 		
+		return vt_id;
 		// copy vt_history and add vt_id to it 
 		
 //		int[] new_vt_hist = new int[vt_history.length + 1];

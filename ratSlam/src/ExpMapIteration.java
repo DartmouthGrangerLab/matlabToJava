@@ -7,14 +7,12 @@ public class ExpMapIteration {
 	// Variables Passed to Class
 	int vt_id, prev_vt_id; 
 	double vtrans, vrot, x_pc, y_pc, th_pc;
-	ArrayList <VT> vt;
+	ArrayList <VT> vts;
 	boolean link_exists;
 
 	// Constants
 	static final double PI = Math.PI;
-	static int PC_DIM_XY = 61;
-	static int PC_DIM_TH = 36;
-	
+
 	// Variables
 	double delta_pc;
 	Vector <Double> delta_pc_vec = new Vector <Double> ();
@@ -25,100 +23,111 @@ public class ExpMapIteration {
 	int matched_exp_id, matched_exp_count;
 	int[] exp_history = {};
 
-	//some persistent variables
-	double accum_delta_x = 0;
-	double accum_delta_y = 0;
+	// Persistent variables
+	double accumDeltaX = 0;
+	double accumDeltaY = 0;
 	double accum_delta_facing = PI/2;
-	
-	// figure out where the initial value is
-	static int EXP_DELTA_PC_THRESHOLD = 0;
+
+	// Set from Ratslam.main
+	static double EXP_DELTA_PC_THRESHOLD = 0;
 	static int EXP_LOOPS;
 	static double EXP_CORRECTION;
+	static int PC_DIM_XY;
+	static int PC_DIM_TH;
 
 	public ExpMapIteration() {
 
 	}
 
 	public void iterate(int vt_id, double vtrans, double vrot, double x_pc, double y_pc, double th_pc,
-			ArrayList <VT> vt,ArrayList <Experience> exps) {
-		
+			ArrayList <VT> vts, ArrayList <Experience> exps) {
+
 		this.vt_id = vt_id;
 		this.vtrans = vtrans;
 		this.vrot = vrot;
 		this.x_pc = x_pc;
 		this.y_pc = y_pc;
 		this.th_pc = th_pc;
-		this.vt = vt;
+		this.vts = vts;
 		this.exps = exps;
-		
+
 		int currExpId = exps.size()-1;
 
 		Experience expCurrExpId = exps.get(currExpId);
-		Experience expPrevExpId = null;
-		
+
 		if (exps.size() >1) {
 			accum_delta_facing = clip_rad_180(accum_delta_facing + vrot);
-			accum_delta_x = accum_delta_x + vtrans * 
+			accumDeltaX = accumDeltaX + vtrans * 
 					Math.cos(accum_delta_facing);
-			accum_delta_y = accum_delta_y + vtrans * 
+			accumDeltaY = accumDeltaY + vtrans * 
 					Math.sin(accum_delta_facing);
 
 		} else {
 			accum_delta_facing = clip_rad_180(
 					accum_delta_facing + vrot); // assumes very first exps has stored initializer constants, PI/2 in this case.
-			accum_delta_x = accum_delta_x + vtrans * Math.cos(accum_delta_facing);
-			accum_delta_y = accum_delta_y + vtrans * Math.sin(accum_delta_facing);
+			accumDeltaX = accumDeltaX + vtrans * Math.cos(accum_delta_facing);
+			accumDeltaY = accumDeltaY + vtrans * Math.sin(accum_delta_facing);
 		}
-		
+
 		delta_pc = Math.sqrt(Math.pow(get_min_delta(expCurrExpId.x_pc, x_pc, PC_DIM_XY),2) + 
 				Math.pow(get_min_delta(expCurrExpId.y_pc, y_pc, PC_DIM_XY), 2) +
 				Math.pow(get_min_delta(expCurrExpId.th_pc, th_pc, PC_DIM_TH), 2));
+
+//		System.out.println("debug: expCurrExpId.x_pc: "+ expCurrExpId.x_pc);
+//		System.out.println("debug: x_pc: "+ x_pc);
+//		System.out.println("debug: expCurrExpId.y_pc: "+ expCurrExpId.y_pc);
+//		System.out.println("debug: y_pc: "+ y_pc);
+//		System.out.println("debug: expCurrExpId.th_pc: "+ expCurrExpId.th_pc);
+//		System.out.println("debug: th_pc: "+ th_pc);
+//		System.out.println("debug: delta_pc: "+ delta_pc);
+
 		// if the vt is new or the pc x,y,th has changed enough, create a new experience
-		prev_vt_id = vt.get(vt.size()-2).id; // see if this works replacing functionality of global in MATLAB
-		if (vt.get(vt.size()-1).numexps == 0 || delta_pc > EXP_DELTA_PC_THRESHOLD) {
+		prev_vt_id = vts.get(vts.size()-1).id; // see if this works replacing functionality of global in MATLAB
+		if (vts.get(vts.size()-1).numexps == 0 || delta_pc > EXP_DELTA_PC_THRESHOLD) {
 			create_new_exp(currExpId, exps.size());
 
 			prevExpId = currExpId;
 			currExpId = exps.size()-1;
 
 			expCurrExpId = exps.get(currExpId);
-			expPrevExpId = exps.get(prevExpId);
-			
-			accum_delta_x = 0;
-			accum_delta_y = 0;
+
+			accumDeltaX = 0;
+			accumDeltaY = 0;
 			accum_delta_facing = exps.get(currExpId).facing_rad;
 		} else if (prev_vt_id != vt_id) {
 			matched_exp_count = 0;
 			matched_exp_id = 0;
-
-			for (int search_id = 0; search_id < vt.get(vt_id).numexps; search_id++) {
+			
+			delta_pc_vec.clear();
+			for (int search_id = 0; search_id < vts.get(vt_id).numexps; search_id++) {
 				delta_pc = Math.sqrt(Math.pow(get_min_delta(exps.get(search_id).x_pc, x_pc, PC_DIM_XY),2) + 
 						Math.pow(get_min_delta(exps.get(search_id).y_pc, y_pc, PC_DIM_XY), 2) +
 						Math.pow(get_min_delta(exps.get(search_id).th_pc, th_pc, PC_DIM_TH), 2));
-		        delta_pc_vec.add(delta_pc);
-		        
-		        if (delta_pc < EXP_DELTA_PC_THRESHOLD) {
-		           matched_exp_count = matched_exp_count + 1; 
-		        }
+				delta_pc_vec.add(delta_pc);
+
+				if (delta_pc < EXP_DELTA_PC_THRESHOLD) {
+					matched_exp_count = matched_exp_count + 1; 
+				}
 			}
 
 			if (matched_exp_count > 1) {
-//				this means we aren't sure about which experience is a match due
-//				to hash table collision
-//				instead of a false positive which may create blunder links in
-//				the experience map keep the previous experience
-//				matched_exp_count
+				//				this means we aren't sure about which experience is a match due
+				//				to hash table collision
+				//				instead of a false positive which may create blunder links in
+				//				the experience map keep the previous experience
+				//				matched_exp_count
 			} else {
 				double min_delta = Collections.min(delta_pc_vec);
+				search.clear();
 				search.add(min_delta);
 				int min_delta_id = Collections.indexOfSubList(delta_pc_vec, search);
-				
+
 				if (min_delta < EXP_DELTA_PC_THRESHOLD) {
-					matched_exp_id = vt.get(vt_id).exps.get(min_delta_id).id;
+					matched_exp_id = vts.get(vt_id).exps.get(min_delta_id);
 
 					// see if the prev exp already has a link to the current exp
 					link_exists = false;
-					for (int link_id = 0; link_id < expCurrExpId.numlinks; link_id++) {
+					for (int link_id = 0; link_id < expCurrExpId.numLinks(); link_id++) {
 						if (expCurrExpId.links.get(link_id).exp_id == matched_exp_id) {
 							link_exists = true;
 							break;
@@ -126,22 +135,19 @@ public class ExpMapIteration {
 					}
 
 					if (!link_exists) {
-						expCurrExpId.numlinks++;
-						expCurrExpId.links.get(expCurrExpId.numlinks).exp_id = matched_exp_id;
-						expCurrExpId.links.get(expCurrExpId.numlinks).d = 
-								Math.sqrt(Math.pow(accum_delta_x, 2) + Math.pow(accum_delta_y, 2));
-						expCurrExpId.links.get(expCurrExpId.numlinks).heading_rad = 
-								get_signed_delta_rad(expCurrExpId.facing_rad, 
-										Math.atan2(accum_delta_y, accum_delta_x));
-						expCurrExpId.links.get(expCurrExpId.numlinks).facing_rad = 
-								get_signed_delta_rad(expCurrExpId.facing_rad, accum_delta_facing);
+						int expID = matched_exp_id;
+						double d = Math.sqrt(Math.pow(accumDeltaX, 2) + Math.pow(accumDeltaY, 2));
+						double heading_rad = get_signed_delta_rad(expCurrExpId.facing_rad, 
+								Math.atan2(accumDeltaY, accumDeltaX));
+						double facing_rad = get_signed_delta_rad(expCurrExpId.facing_rad, accum_delta_facing);
+						expCurrExpId.links.add(new Link(expID, d, heading_rad, facing_rad));
 					}
 				}
 
 				// if there wasn't an experience with the current vt and the posecell x y th
 				// then create a new experience
 				if (matched_exp_id == 0) {
-//					numExps++;
+					//					numExps++;
 					create_new_exp(currExpId, exps.size());
 					matched_exp_id = exps.size();
 				}
@@ -150,32 +156,32 @@ public class ExpMapIteration {
 				curr_exp_id = matched_exp_id;
 
 				expCurrExpId = exps.get(currExpId);
-				
-				accum_delta_x = 0;
-				accum_delta_y = 0;
-				accum_delta_facing = exps.get(curr_exp_id).facing_rad;
+
+				accumDeltaX = 0;
+				accumDeltaY = 0;
+				accum_delta_facing = exps.get(curr_exp_id-1).facing_rad;
 			}
 		}
 		for (int i = 0; i < EXP_LOOPS; i++) {
 			for(int exp_id = 0; exp_id < exps.size(); exp_id++) {
-				for (int link_id = 0; link_id < exps.get(exp_id).numlinks; link_id++) {
+				for (int link_id = 0; link_id < exps.get(exp_id).numLinks(); link_id++) {
 					int e0 = exp_id;
 					int e1 = exps.get(exp_id).links.get(link_id).exp_id;
 
 					double lx = exps.get(e0).x_m + exps.get(e0).links.get(link_id).d * 
 							Math.cos(exps.get(e0).facing_rad + 
-							exps.get(e0).links.get(link_id).heading_rad);
+									exps.get(e0).links.get(link_id).heading_rad);
 					double ly = exps.get(e0).y_m + exps.get(e0).links.get(link_id).d * 
 							Math.sin(exps.get(e0).facing_rad + 
-							exps.get(e0).links.get(link_id).heading_rad);
+									exps.get(e0).links.get(link_id).heading_rad);
 
 					exps.get(e0).x_m = exps.get(e0).x_m + (exps.get(e1).x_m - lx) * EXP_CORRECTION;
 					exps.get(e0).y_m = exps.get(e0).y_m + (exps.get(e1).y_m - ly) * EXP_CORRECTION;
 					exps.get(e1).x_m = exps.get(e1).x_m - (exps.get(e1).x_m - lx) * EXP_CORRECTION;
 					exps.get(e1).y_m = exps.get(e1).y_m - (exps.get(e1).y_m - ly) * EXP_CORRECTION;
 
-//						System.out.println("debug: e0: "+ e0);
-					
+					//						System.out.println("debug: e0: "+ e0);
+
 					double df = get_signed_delta_rad((exps.get(e0).facing_rad + 
 							exps.get(e0).links.get(link_id).facing_rad), exps.get(e1).facing_rad);
 
@@ -187,13 +193,13 @@ public class ExpMapIteration {
 			}
 		}
 
-//		int newLength = exp_history.length + 1;
-//		int[] new_exp_history = new int[newLength];
-//		for (int i = 0; i < newLength; i++) {
-//			new_exp_history[i] = exp_history[i];
-//		}
-//		new_exp_history[newLength + 1] = currExpId;
-//		exp_history = new_exp_history;
+		//		int newLength = exp_history.length + 1;
+		//		int[] new_exp_history = new int[newLength];
+		//		for (int i = 0; i < newLength; i++) {
+		//			new_exp_history[i] = exp_history[i];
+		//		}
+		//		new_exp_history[newLength + 1] = currExpId;
+		//		exp_history = new_exp_history;
 	}
 
 	// Create a new experience map and add the current experience map onto it
@@ -201,25 +207,25 @@ public class ExpMapIteration {
 		int currExpIdLinkIdx = 0;
 		Experience expCurrExpId = exps.get(curr_exp_id);
 
-		expCurrExpId.numlinks++;
-		expCurrExpId.links.add(new Link(new_exp_id, 0, 0, 0, 0));
+		expCurrExpId.links.add(new Link(new_exp_id, 0, 0, 0));
 
-		currExpIdLinkIdx = expCurrExpId.numlinks-1;
+		currExpIdLinkIdx = expCurrExpId.numLinks()-1;
 		Link currExpIdLink = expCurrExpId.links.get(currExpIdLinkIdx);
 
 		currExpIdLink.exp_id = new_exp_id;
-		currExpIdLink.d = Math.sqrt( Math.pow(accum_delta_x,2) + Math.pow(accum_delta_y,2));
-		currExpIdLink.heading_rad = get_signed_delta_rad(expCurrExpId.facing_rad, Math.atan2(accum_delta_y, accum_delta_x));
+		currExpIdLink.d = Math.sqrt( Math.pow(accumDeltaX,2) + Math.pow(accumDeltaY,2));
+		currExpIdLink.heading_rad = get_signed_delta_rad(expCurrExpId.facing_rad, Math.atan2(accumDeltaY, accumDeltaX));
 		currExpIdLink.facing_rad = get_signed_delta_rad(expCurrExpId.facing_rad, accum_delta_facing);
 
-		exps.add(new Experience(currExpIdLinkIdx+1, x_pc, y_pc, th_pc, (expCurrExpId.x_m + accum_delta_x),
-				(expCurrExpId.y_m + accum_delta_y), clip_rad_180(accum_delta_facing), vt_id, 0, new ArrayList <Link> ()));
+		exps.add(new Experience(currExpIdLinkIdx+1, x_pc, y_pc, th_pc, (expCurrExpId.x_m + accumDeltaX),
+				(expCurrExpId.y_m + accumDeltaY), clip_rad_180(accum_delta_facing), vt_id, new ArrayList <Link> ()));
 
-		// add this experience id to the vt for efficient lookup
-		//XXX put this functionality back, maybe - BBT
-		//		vt.get(vt_id-1).numexps++;
-		//		vt.get(vt_id-1).exps.get(vt.get(vt_id).numexps).id = new_exp_id;
+//		System.out.println("debug: exps count: "+ exps.size());
 
+		// add this experience id to the vt for efficient lookup <---NO, THIS IS REQUIRED FOR PROPER FUNCTIONING
+		//TODO needs fixing
+		vts.get(vt_id).numexps++;
+		vts.get(vt_id).exps.add(new_exp_id);
 	}
 
 	// Clip the input angle to between 0 and 2pi radians 

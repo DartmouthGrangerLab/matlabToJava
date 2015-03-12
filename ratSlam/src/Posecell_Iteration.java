@@ -8,8 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // rs_posecell_iteration (vt_id, vtrans, vrot)
-public class Posecell_Iteration 
-{
+public class Posecell_Iteration {
 	static final double PI = Math.PI;
 
 	// Constants Needed
@@ -35,6 +34,7 @@ public class Posecell_Iteration
 	int act_th;
 	double energy;
 	double[][][] pca_new;
+	double[][][] pca_old;
 	double dir;
 	double[][][] posecells;
 	int circshiftX = 0;
@@ -53,14 +53,14 @@ public class Posecell_Iteration
 	Posecells pc;
 	ArrayList <VT> vts;
 
-	public Posecell_Iteration(int vtId, double trans, double rot, Posecells p, ArrayList <VT> vts, int [] PC_E_XY_WRAP, int [] PC_E_TH_WRAP, int [] PC_I_XY_WRAP, int [] PC_I_TH_WRAP)
+	public Posecell_Iteration(int vtId, double trans, double rot, Posecells pc, ArrayList <VT> vts, int [] PC_E_XY_WRAP, int [] PC_E_TH_WRAP, int [] PC_I_XY_WRAP, int [] PC_I_TH_WRAP)
 	{
 		vt_id = vtId;
 		vtrans = trans;
 		vrot = rot;
-		pc = p;
 		this.vts = vts;
-		posecells = p.posecells;
+		this.pc = pc;
+		posecells = pc.posecells;
 		PC_W_EXCITE = pc.pc_w_excite;
 		PC_W_INHIB = pc.pc_w_inhib;
 		this.PC_E_XY_WRAP = PC_E_XY_WRAP;
@@ -69,11 +69,9 @@ public class Posecell_Iteration
 		this.PC_I_TH_WRAP = PC_I_TH_WRAP;
 	}
 
-	public void iteration()
-	{
+	public Posecells iteration() {
 		// if this isn't a new vt, then add the energy at its associated posecell location
-		if (vts.get(vt_id-1).first != 1)
-		{
+		if (vts.get(vt_id-1).first != 1) {
 			act_x = (int) Math.min(Math.max(Math.round(vts.get(vt_id-1).x_pc), 1), PC_DIM_XY);
 			act_y = (int) Math.min(Math.max(Math.round(vts.get(vt_id-1).y_pc), 1), PC_DIM_XY);
 			act_th = (int) Math.min(Math.max(Math.round(vts.get(vt_id-1).th_pc), 1), PC_DIM_TH);
@@ -89,17 +87,18 @@ public class Posecell_Iteration
 			}
 		}
 
+		pca_old = posecells;
 		// local excitation - PC_le = PC elements + PC weights
 		pca_new = new double[PC_DIM_XY][PC_DIM_XY][PC_DIM_TH];
 		for (int i = 0; i < PC_DIM_XY; i++) {
 			for (int j = 0; j < PC_DIM_XY; j++) {
 				for (int k = 0; k < PC_DIM_TH; k++) {
 					if (posecells[i][j][k] != 0) {
-						for (int m = i; m < (i+ PC_W_E_DIM - 1); m++)
-							for (int n = j; n < (j + PC_W_E_DIM - 1); n++)
-								for (int o = k; o < (k + PC_W_E_DIM - 1); o++)
-									pca_new[PC_E_XY_WRAP[m]][PC_E_XY_WRAP[n]][PC_E_TH_WRAP[o]] = 
-									pca_new[PC_E_XY_WRAP[m]][PC_E_XY_WRAP[n]][PC_E_TH_WRAP[o]] + posecells[i][j][k] * PC_W_EXCITE[m-i][n-j][o-k];					
+						for (int m = i; m < (i+ PC_W_E_DIM); m++)
+							for (int n = j; n < (j + PC_W_E_DIM); n++)
+								for (int o = k; o < (k + PC_W_E_DIM); o++)
+									pca_new[PC_E_XY_WRAP[m-1]][PC_E_XY_WRAP[n-1]][PC_E_TH_WRAP[o-1]] = 
+									pca_new[PC_E_XY_WRAP[m-1]][PC_E_XY_WRAP[n-1]][PC_E_TH_WRAP[o-1]] + posecells[i][j][k] * PC_W_EXCITE[m-i][n-j][o-k];
 					}
 				}
 			}
@@ -113,17 +112,16 @@ public class Posecell_Iteration
 		for (int i = 0; i < PC_DIM_XY; i++) {
 			for (int j = 0; j < PC_DIM_XY; j++) {
 				for (int k = 0; k < PC_DIM_TH; k++) {
-					if (posecells[i][j][k] != 0) {
-						for (int m = i; m < (i + PC_W_I_DIM - 1); m++)
-							for (int n = j; n < (j + PC_W_I_DIM - 1); n++)
-								for (int o = k; o < (k + PC_W_I_DIM - 1); o++)
-									pca_new[PC_I_XY_WRAP[m]][PC_I_XY_WRAP[n]][PC_I_TH_WRAP[o]] =
-									pca_new[PC_I_XY_WRAP[m]][PC_I_XY_WRAP[n]][PC_I_TH_WRAP[o]] + posecells[i][j][k] * PC_W_INHIB[m-i][n-j][o-k];
+					if (pca_old[i][j][k] !=0) { //base this off old posecell network before excitation step, like MATLAB original
+						for (int m = i; m < (i + PC_W_I_DIM); m++)
+							for (int n = j; n < (j + PC_W_I_DIM); n++)
+								for (int o = k; o < (k + PC_W_I_DIM); o++)
+									pca_new[PC_I_XY_WRAP[m-1]][PC_I_XY_WRAP[n-1]][PC_I_TH_WRAP[o-1]] =
+									pca_new[PC_I_XY_WRAP[m-1]][PC_I_XY_WRAP[n-1]][PC_I_TH_WRAP[o-1]] + posecells[i][j][k] * PC_W_INHIB[m-i][n-j][o-k];
 					}
 				}
 			}
 		}
-
 
 		// Subtract every posecell by pca_new
 		for (int i = 0; i < PC_DIM_XY; i++) {
@@ -141,10 +139,12 @@ public class Posecell_Iteration
 		for (int i = 0; i < PC_DIM_XY; i++) {
 			for (int j = 0; j < PC_DIM_XY; j++) {
 				for (int k = 0; k < PC_DIM_TH; k++) {
-					double x = posecells[i][j][k];
+					double x = posecells[i][j][k]; // this just masks out small values in Posecell network to 0
 					if (x >= PC_GLOBAL_INHIB) {
-						posecells[i][j][k] *= (x - PC_GLOBAL_INHIB);
+						posecells[i][j][k] = (x - PC_GLOBAL_INHIB);
 						total += posecells[i][j][k];
+					} else {
+						posecells[i][j][k] = 0;
 					}
 				}
 			}
@@ -250,7 +250,7 @@ public class Posecell_Iteration
 		// Path Integration - Theta
 		// Shift the pose cells +/- theta given by vrot
 		if (vrot != 0) {
-//			System.out.println("Debug: Doing path integration.");
+			//			System.out.println("Debug: Doing path integration.");
 			// mod to work out the partial shift amount
 			double weight = (Math.abs(vrot) / PC_C_SIZE_TH) % 1;
 			if (weight == 0) {
@@ -266,129 +266,131 @@ public class Posecell_Iteration
 			double [][][] leftHalf = Util.circshift(posecells, new int[]{circshiftX, circshiftY, circshiftZ1});
 			double [][][] rightHalf = Util.circshift(posecells, new int[]{circshiftX, circshiftY, circshiftZ2});
 			posecells = Util.addArrays(Util.multiply_elements(leftHalf, (1.0 - weight)), 
-					Util.multiply_elements(rightHalf, weight)); 
-			}
+					Util.multiply_elements(rightHalf, weight));
 		}
+		this.pc.posecells = posecells;
+		return pc;
+	}
 
-		// Use when doing N, E, S, W directions
-		private void goThrough (int constThird, int[] direct) {
-			for (int i = 0; i < PC_DIM_XY; i++) {
-				for (int j = 0; j < PC_DIM_XY; j++) {
-					double toUse = posecells[i][j][constThird];			
-					posecells[i][j][constThird] = (toUse * (1 - vtrans)) + (
-							Util.multiply_elements(Util.circshift(posecells, direct), vtrans)[i][j][constThird]);
-				}
-			}
-		}
-		
-		public static void main (String args []){
-			double testArrLR [][][] = new double [3][4][3];
-			double testArrUD [][][] = new double [3][3][3];
-			double thisArr [][][] = new double [3][3][3];
-// this version is good for shift up/down testing
-			testArrUD [0][0][0] = 1;
-			testArrUD [1][0][0] = 2;
-			testArrUD [2][0][0] = 3;
-			
-			testArrUD [0][1][0] = 1;
-			testArrUD [1][1][0] = 2;
-			testArrUD [2][1][0] = 3;
-			
-			testArrUD [0][2][0] = 1;
-			testArrUD [1][2][0] = 2;
-			testArrUD [2][2][0] = 3;
-			
-			testArrUD [0][0][1] = 4;
-			testArrUD [1][0][1] = 5;
-			testArrUD [2][0][1] = 6;
-			
-			testArrUD [0][1][1] = 4;
-			testArrUD [1][1][1] = 5;
-			testArrUD [2][1][1] = 6;
-			
-			testArrUD [0][2][1] = 4;
-			testArrUD [1][2][1] = 5;
-			testArrUD [2][2][1] = 6;
-			
-			testArrUD [0][0][2] = 7;
-			testArrUD [1][0][2] = 8;
-			testArrUD [2][0][2] = 9;
-			
-			testArrUD [0][1][2] = 7;
-			testArrUD [1][1][2] = 8;
-			testArrUD [2][1][2] = 9;
-			
-			testArrUD [0][2][2] = 7;
-			testArrUD [1][2][2] = 8;
-			testArrUD [2][2][2] = 9;
-			
-// this version is good for shift left/right testing
-			testArrLR [0][0][0] = 1;
-			testArrLR [1][0][0] = 1;
-			testArrLR [2][0][0] = 1;
-			
-			testArrLR [0][1][0] = 2;
-			testArrLR [1][1][0] = 2;
-			testArrLR [2][1][0] = 2;
-			
-			testArrLR [0][2][0] = 3;
-			testArrLR [1][2][0] = 3;
-			testArrLR [2][2][0] = 3;
-			
-			testArrLR [0][3][0] = 3.5;
-			testArrLR [1][3][0] = 3.5;
-			testArrLR [2][3][0] = 3.5;
-			
-			testArrLR [0][0][1] = 4;
-			testArrLR [1][0][1] = 4;
-			testArrLR [2][0][1] = 4;
-			
-			testArrLR [0][1][1] = 5;
-			testArrLR [1][1][1] = 5;
-			testArrLR [2][1][1] = 5;
-			
-			testArrLR [0][2][1] = 6;
-			testArrLR [1][2][1] = 6;
-			testArrLR [2][2][1] = 6;
-			
-			testArrLR [0][3][1] = 6.5;
-			testArrLR [1][3][1] = 6.5;
-			testArrLR [2][3][1] = 6.5;
-			
-			testArrLR [0][0][2] = 7;
-			testArrLR [1][0][2] = 7;
-			testArrLR [2][0][2] = 7;
-			
-			testArrLR [0][1][2] = 8;
-			testArrLR [1][1][2] = 8;
-			testArrLR [2][1][2] = 8;
-			
-			testArrLR [0][2][2] = 9;
-			testArrLR [1][2][2] = 9;
-			testArrLR [2][2][2] = 9;
-			
-			testArrLR [0][3][2] = 9.5;
-			testArrLR [1][3][2] = 9.5;
-			testArrLR [2][3][2] = 9.5;
-			
-			thisArr = testArrUD;
-			for(int k=0; k<3; k++) {
-				System.out.println("depth:"+k);
-				for(int i=0; i<3; i++) {
-					for(int j=0; j<4; j++)
-						System.out.print(thisArr[i][j][k] + " ");
-					System.out.println();
-				}
-			}
-			thisArr = Util.circshift (thisArr, new int [] {1,0,0}); // int [] {row or y shift, col or x shift, depth or z shift}
-			System.out.println("After circshift--------------------------------");
-			for(int k=0; k<3; k++) {
-				System.out.println("depth:"+k);
-				for(int i=0; i<3; i++) {
-					for(int j=0; j<4; j++)
-						System.out.print(thisArr[i][j][k] + " ");
-					System.out.println();
-				}
+	// Use when doing N, E, S, W directions
+	private void goThrough (int constThird, int[] direct) {
+		for (int i = 0; i < PC_DIM_XY; i++) {
+			for (int j = 0; j < PC_DIM_XY; j++) {
+				double toUse = posecells[i][j][constThird];			
+				posecells[i][j][constThird] = (toUse * (1 - vtrans)) + (
+						Util.multiply_elements(Util.circshift(posecells, direct), vtrans)[i][j][constThird]);
 			}
 		}
 	}
+
+	//		public static void main (String args []){
+	//			double testArrLR [][][] = new double [3][4][3];
+	//			double testArrUD [][][] = new double [3][3][3];
+	//			double thisArr [][][] = new double [3][3][3];
+	//// this version is good for shift up/down testing
+	//			testArrUD [0][0][0] = 1;
+	//			testArrUD [1][0][0] = 2;
+	//			testArrUD [2][0][0] = 3;
+	//			
+	//			testArrUD [0][1][0] = 1;
+	//			testArrUD [1][1][0] = 2;
+	//			testArrUD [2][1][0] = 3;
+	//			
+	//			testArrUD [0][2][0] = 1;
+	//			testArrUD [1][2][0] = 2;
+	//			testArrUD [2][2][0] = 3;
+	//			
+	//			testArrUD [0][0][1] = 4;
+	//			testArrUD [1][0][1] = 5;
+	//			testArrUD [2][0][1] = 6;
+	//			
+	//			testArrUD [0][1][1] = 4;
+	//			testArrUD [1][1][1] = 5;
+	//			testArrUD [2][1][1] = 6;
+	//			
+	//			testArrUD [0][2][1] = 4;
+	//			testArrUD [1][2][1] = 5;
+	//			testArrUD [2][2][1] = 6;
+	//			
+	//			testArrUD [0][0][2] = 7;
+	//			testArrUD [1][0][2] = 8;
+	//			testArrUD [2][0][2] = 9;
+	//			
+	//			testArrUD [0][1][2] = 7;
+	//			testArrUD [1][1][2] = 8;
+	//			testArrUD [2][1][2] = 9;
+	//			
+	//			testArrUD [0][2][2] = 7;
+	//			testArrUD [1][2][2] = 8;
+	//			testArrUD [2][2][2] = 9;
+	//			
+	//// this version is good for shift left/right testing
+	//			testArrLR [0][0][0] = 1;
+	//			testArrLR [1][0][0] = 1;
+	//			testArrLR [2][0][0] = 1;
+	//			
+	//			testArrLR [0][1][0] = 2;
+	//			testArrLR [1][1][0] = 2;
+	//			testArrLR [2][1][0] = 2;
+	//			
+	//			testArrLR [0][2][0] = 3;
+	//			testArrLR [1][2][0] = 3;
+	//			testArrLR [2][2][0] = 3;
+	//			
+	//			testArrLR [0][3][0] = 3.5;
+	//			testArrLR [1][3][0] = 3.5;
+	//			testArrLR [2][3][0] = 3.5;
+	//			
+	//			testArrLR [0][0][1] = 4;
+	//			testArrLR [1][0][1] = 4;
+	//			testArrLR [2][0][1] = 4;
+	//			
+	//			testArrLR [0][1][1] = 5;
+	//			testArrLR [1][1][1] = 5;
+	//			testArrLR [2][1][1] = 5;
+	//			
+	//			testArrLR [0][2][1] = 6;
+	//			testArrLR [1][2][1] = 6;
+	//			testArrLR [2][2][1] = 6;
+	//			
+	//			testArrLR [0][3][1] = 6.5;
+	//			testArrLR [1][3][1] = 6.5;
+	//			testArrLR [2][3][1] = 6.5;
+	//			
+	//			testArrLR [0][0][2] = 7;
+	//			testArrLR [1][0][2] = 7;
+	//			testArrLR [2][0][2] = 7;
+	//			
+	//			testArrLR [0][1][2] = 8;
+	//			testArrLR [1][1][2] = 8;
+	//			testArrLR [2][1][2] = 8;
+	//			
+	//			testArrLR [0][2][2] = 9;
+	//			testArrLR [1][2][2] = 9;
+	//			testArrLR [2][2][2] = 9;
+	//			
+	//			testArrLR [0][3][2] = 9.5;
+	//			testArrLR [1][3][2] = 9.5;
+	//			testArrLR [2][3][2] = 9.5;
+	//			
+	//			thisArr = testArrUD;
+	//			for(int k=0; k<3; k++) {
+	//				System.out.println("depth:"+k);
+	//				for(int i=0; i<3; i++) {
+	//					for(int j=0; j<4; j++)
+	//						System.out.print(thisArr[i][j][k] + " ");
+	//					System.out.println();
+	//				}
+	//			}
+	//			thisArr = Util.circshift (thisArr, new int [] {1,0,0}); // int [] {row or y shift, col or x shift, depth or z shift}
+	//			System.out.println("After circshift--------------------------------");
+	//			for(int k=0; k<3; k++) {
+	//				System.out.println("depth:"+k);
+	//				for(int i=0; i<3; i++) {
+	//					for(int j=0; j<4; j++)
+	//						System.out.print(thisArr[i][j][k] + " ");
+	//					System.out.println();
+	//				}
+	//			}
+	//		}
+}
