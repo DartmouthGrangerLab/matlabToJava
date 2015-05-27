@@ -20,9 +20,14 @@ public class VisualOdometry
 		int[] IMAGE_VTRANS_Y_RANGE = odos.get(0).IMAGE_ODO_X_RANGE;
 		int[] IMAGE_VROT_Y_RANGE = odos.get(0).IMAGE_VROT_Y_RANGE;
 		int[] IMAGE_ODO_X_RANGE = odos.get(0).IMAGE_ODO_X_RANGE;
+		
+		// this block represents marginal tuning improvements for Kemeny_Loop videos
+//		int[] IMAGE_VTRANS_Y_RANGE = Util.setRange(240, 475);
+//		int[] IMAGE_VROT_Y_RANGE = Util.setRange(10, 275);
+//		int[] IMAGE_ODO_X_RANGE = odos.get(0).IMAGE_ODO_X_RANGE;
 
 		int [][] raw_image = Util.get2DarrayIntsFromImg(img);
-		double FOV_DEG = 50;
+		double FOV_DEG = 65; //65 is BBT phone camera //94.4;// one of the GoPro modes //60 work for 2nd Life default FOV //90; 90 works for ARDrone captures //50; // 50 works for St Lucia dataset
 		double width = raw_image[1].length;
 		double degreesPerPixel = FOV_DEG / width;
 		
